@@ -5,12 +5,40 @@ MotionLab AI - FastAPI 서버 진입점
 import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from contextlib import asynccontextmanager
 
 from api import health, analyze
 from config.settings import get_settings
 from utils.logger import logger, mask_sensitive
 
 settings = get_settings()
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """
+    FastAPI lifespan 이벤트 핸들러
+
+    - yield 전: 서버 시작 시 실행 (startup)
+    - yield 후: 서버 종료 시 실행 (shutdown)
+    """
+    # ========== Startup ==========
+    logger.info("=" * 60)
+    logger.info("MotionLab AI Server 시작")
+    logger.info(f"포트: {settings.PORT}")
+    logger.info(f"호스트: {settings.HOST}")
+    logger.info(f"LLM Noop 모드: {settings.ENABLE_LLM_NOOP}")
+    logger.info(f"MediaPipe 모델 복잡도: {settings.MEDIAPIPE_MODEL_COMPLEXITY}")
+    logger.info(f"API Key: {mask_sensitive(settings.INTERNAL_API_KEY)}")
+    logger.info("=" * 60)
+
+    yield  # 여기서 앱 실행 중
+
+    # ========== Shutdown (필요 시) ==========
+    logger.info("=" * 60)
+    logger.info("MotionLab AI Server 종료")
+    logger.info("=" * 60)
+
 
 # FastAPI 앱 생성
 app = FastAPI(
@@ -22,7 +50,8 @@ app = FastAPI(
     openapi_tags=[
         {"name": "Health", "description": "서버 상태 확인"},
         {"name": "Analysis", "description": "운동 영상 분석"}
-    ]
+    ],
+    lifespan=lifespan  # lifespan 이벤트 핸들러 연결
 )
 
 # CORS 설정
@@ -37,19 +66,6 @@ app.add_middleware(
 # 라우터 등록
 app.include_router(health.router, tags=["Health"])
 app.include_router(analyze.router, tags=["Analysis"])
-
-
-@app.on_event("startup")
-async def startup_event():
-    """서버 시작 시 실행"""
-    logger.info("=" * 60)
-    logger.info("MotionLab AI Server 시작")
-    logger.info(f"포트: {settings.PORT}")
-    logger.info(f"호스트: {settings.HOST}")
-    logger.info(f"LLM Noop 모드: {settings.ENABLE_LLM_NOOP}")
-    logger.info(f"MediaPipe 모델 복잡도: {settings.MEDIAPIPE_MODEL_COMPLEXITY}")
-    logger.info(f"API Key: {mask_sensitive(settings.INTERNAL_API_KEY)}")
-    logger.info("=" * 60)
 
 
 if __name__ == "__main__":

@@ -1,42 +1,42 @@
 """
-MotionLab AI - 분석 요청 모델
-Backend에서 전달되는 분석 요청 데이터 구조
+분석 요청 모델 (Backend Worker → Analyzer)
 """
 from pydantic import BaseModel, Field
+from typing import Literal, Optional
 
 
 class AnalysisRequest(BaseModel):
     """
-    분석 요청 데이터 (A2 규칙)
+    POST /analyze 요청 바디
 
-    Attributes:
-        motion_id: Motion 고유 ID (Backend DB의 Primary Key)
-        video_url: 분석할 영상 URL (S3 Presigned URL 또는 로컬 경로)
-        sport_code: 스포츠 종목 코드 (예: "GOLF", "BASEBALL")
+    프롬프트 A2 규칙:
+    - motion_id: Backend Motion 테이블 ID
+    - video_url: Presigned URL 또는 로컬 절대 경로
+    - sport_type: GOLF, WEIGHT, TENNIS 등
+    - sub_category: DRIVER, SQUAT, SERVE 등 (선택)
     """
-
     motion_id: int = Field(
         ...,
-        description="Motion 고유 ID",
-        examples=[15],
-        gt=0
+        description="Backend Motion ID",
+        examples=[15]
     )
 
     video_url: str = Field(
         ...,
-        description="영상 URL (S3 Presigned URL 또는 로컬 절대 경로)",
-        examples=["https://r2.example.com/motions/u1/GOLF/video.mp4"],
-        min_length=10,
-        max_length=1000
+        description="S3 Presigned URL 또는 로컬 절대 경로",
+        examples=["https://r2.example.com/video.mp4?signature=abc"]
     )
 
-    sport_code: str = Field(
+    sport_type: str = Field(
         ...,
-        description="스포츠 종목 코드",
-        examples=["GOLF"],
-        pattern=r"^[A-Z]+$",
-        min_length=2,
-        max_length=20
+        description="스포츠 종목 (GOLF, WEIGHT, TENNIS)",
+        examples=["GOLF"]
+    )
+
+    sub_category: Optional[str] = Field(
+        None,
+        description="서브 카테고리 (DRIVER, IRON, SQUAT 등)",
+        examples=["DRIVER"]
     )
 
     model_config = {
@@ -44,8 +44,9 @@ class AnalysisRequest(BaseModel):
             "examples": [
                 {
                     "motion_id": 15,
-                    "video_url": "https://r2.example.com/motions/u1/GOLF/video.mp4",
-                    "sport_code": "GOLF"
+                    "video_url": "https://r2.example.com/video.mp4",
+                    "sport_type": "GOLF",
+                    "sub_category": "DRIVER"
                 }
             ]
         }
