@@ -59,7 +59,7 @@ user: |
   
   {{ shared.feedback_guide }}
   
-  {{ shared.improvements_guide %}
+  {{ shared.improvements_guide }}
   
   {{ shared.output_format }}
   
