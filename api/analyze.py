@@ -5,15 +5,17 @@
 - api/: HTTP 요청/응답 처리만
 - 비즈니스 로직은 services/로 위임
 """
+
 from fastapi import APIRouter, Depends, HTTPException
 from models import AnalysisRequest, AnalysisResponse, ErrorResponse
 from services.analysis_service import AnalysisService
 from utils.dependencies import verify_api_key
-from utils.errors import AnalyzerError
+from utils.exceptions import AnalyzerError
 import logging
 
 router = APIRouter(prefix="", tags=["Analysis"])
 logger = logging.getLogger(__name__)
+
 
 @router.post(
     "/analyze",
@@ -24,7 +26,7 @@ logger = logging.getLogger(__name__)
     },
     summary="운동 영상 분석",
     description="MediaPipe 포즈 추출 + 각도 계산 + LLM 피드백 생성",
-    dependencies=[Depends(verify_api_key)]  # API 키 검증
+    dependencies=[Depends(verify_api_key)],  # API 키 검증
 )
 async def analyze_motion(request: AnalysisRequest):
     """
@@ -51,7 +53,7 @@ async def analyze_motion(request: AnalysisRequest):
             motion_id=request.motion_id,
             video_url=request.video_url,
             sport_type=request.sport_type,
-            sub_category=request.sub_category
+            sub_category=request.sub_category,
         )
 
         logger.info(f"분석 완료: motion_id={request.motion_id}")
@@ -61,19 +63,16 @@ async def analyze_motion(request: AnalysisRequest):
         # 커스텀 에러 -> HTTP 예외 변환
         logger.error(
             f"분석 실패: motion_id={request.motion_id}, error_code={e.error_code}",
-            exc_info=False  # 스택 트레이스 안 찍음 (사용자 과실)
+            exc_info=False,  # 스택 트레이스 안 찍음 (사용자 과실)
         )
 
-        raise HTTPException(
-            status_code=e.status_code,
-            detail=e.to_dict()
-        )
+        raise HTTPException(status_code=e.status_code, detail=e.to_dict())
 
     except Exception as e:
         # 예상치 못한 에러
         logger.error(
             f"알 수 없는 에러: motion_id={request.motion_id}",
-            exc_info=True  # 개발 환경에서만 스택 트레이스
+            exc_info=True,  # 개발 환경에서만 스택 트레이스
         )
 
         raise HTTPException(
@@ -82,6 +81,6 @@ async def analyze_motion(request: AnalysisRequest):
                 "success": False,
                 "error_code": "SYS_999",
                 "message": str(e),
-                "retryable": True
-            }
+                "retryable": True,
+            },
         )

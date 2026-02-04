@@ -21,7 +21,7 @@ import cv2
 import logging
 import mediapipe as mp
 from typing import List, Dict, Any
-from utils.errors import NoKeypointsError, VideoTooShortError
+from utils.exceptions.errors import NoKeypointsError, VideoTooShortError
 from config.settings import get_settings
 
 logger = logging.getLogger(__name__)
@@ -142,18 +142,22 @@ class MediaPipeAnalyzer:
                     # 33개 랜드마크 수집
                     landmarks = []
                     for lm in results.pose_landmarks.landmark:
-                        landmarks.append({
-                            "x": float(lm.x),  # 정규화된 x 좌표 (0.0~1.0)
-                            "y": float(lm.y),  # 정규화된 y 좌표 (0.0~1.0)
-                            "z": float(lm.z),  # 깊이 (음수=앞, 양수=뒤)
-                            "visibility": float(lm.visibility)  # 신뢰도 (0.0~1.0)
-                        })
+                        landmarks.append(
+                            {
+                                "x": float(lm.x),  # 정규화된 x 좌표 (0.0~1.0)
+                                "y": float(lm.y),  # 정규화된 y 좌표 (0.0~1.0)
+                                "z": float(lm.z),  # 깊이 (음수=앞, 양수=뒤)
+                                "visibility": float(lm.visibility),  # 신뢰도 (0.0~1.0)
+                            }
+                        )
 
-                    all_landmarks.append({
-                        "frame_index": frame_index,
-                        "timestamp": frame_index / fps,  # 초 단위 타임스탬프
-                        "landmarks": landmarks
-                    })
+                    all_landmarks.append(
+                        {
+                            "frame_index": frame_index,
+                            "timestamp": frame_index / fps,  # 초 단위 타임스탬프
+                            "landmarks": landmarks,
+                        }
+                    )
                     valid_frames += 1
 
                 frame_index += 1
@@ -185,9 +189,7 @@ class MediaPipeAnalyzer:
         return all_landmarks
 
     def get_landmark_by_name(
-            self,
-            landmarks: List[Dict],
-            name: str
+        self, landmarks: List[Dict], name: str
     ) -> Dict[str, float]:
         """
         랜드마크 이름으로 좌표 가져오기
@@ -241,6 +243,6 @@ class MediaPipeAnalyzer:
         - MediaPipe Pose 객체는 메모리/GPU 리소스를 점유
         - 명시적으로 close() 호출 필요
         """
-        if hasattr(self, 'pose'):
+        if hasattr(self, "pose"):
             self.pose.close()
             logger.debug("MediaPipe Pose 리소스 정리 완료")

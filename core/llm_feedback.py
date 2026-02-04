@@ -1,167 +1,177 @@
 """
-MotionLab AI - LLM 피드백 생성
+MotionLab AI - LLM 피드백 생성 (YAML 프롬프트 + 자동 버전 관리)
 """
+
 import json
-from typing import Dict, List
-from openai import OpenAI
+from typing import Dict, Any, List
+
+from openai import AsyncOpenAI
+
 from config import get_settings
+from core.prompts.loader import prompt_loader
 from utils.logger import logger
+from utils.exceptions import AnalyzerError, ErrorCode
 
 
 class LLMFeedback:
-    """LLM 기반 피드백 생성기"""
+    """OpenAI GPT-4o-mini를 사용한 피드백 생성"""
 
     def __init__(self):
-        """OpenAI 클라이언트 초기화"""
+        """LLMFeedback 초기화"""
         settings = get_settings()
-        self.enable_noop = settings.ENABLE_LLM_NOOP
-        self.model = settings.LLM_MODEL
-        self.temperature = settings.LLM_TEMPERATURE
-        self.max_tokens = settings.LLM_MAX_TOKENS
+        self.noop_mode = settings.ENABLE_LLM_NOOP
 
-        if not self.enable_noop:
-            self.client = OpenAI(api_key=settings.OPENAI_API_KEY)
+        if not self.noop_mode:
+            self.client = AsyncOpenAI(api_key=settings.openai_api_key)
+            self.model = "gpt-4o-mini"
+            logger.info(f"✅ LLM 클라이언트 초기화: model={self.model}")
         else:
             self.client = None
-            logger.info("⚠️ LLM Noop 모드 활성화")
+            self.model = None
+            logger.warning("⚠️ LLM NOOP 모드 활성화 (규칙 기반 피드백 사용)")
 
-    def generate_feedback(
-            self,
-            sport_type: str,
-            sub_category: str,
-            average_angles: Dict[str, float],
-            phases: List[Dict],
-            sport_config: Dict
-    ) -> Dict:
-        """피드백 생성 메인 함수"""
+        logger.info(f"✅ LLMFeedback 초기화: model={self.model}")
 
-        if self.enable_noop:
-            return self._generate_noop_feedback(sport_type, sub_category, average_angles)
+    async def generate_feedback(
+        self,
+        sport_type: str,
+        sub_category: str,
+        angles: List[Dict[str, Any]],
+        phases: List[Dict[str, Any]],
+    ) -> Dict[str, Any]:
+        """LLM 피드백 생성"""
 
-        prompt = self._build_prompt(sport_type, sub_category, average_angles, phases, sport_config)
-
-        try:
-            response = self.client.chat.completions.create(
-                model=self.model,
-                messages=[
-                    {
-                        "role": "system",
-                        "content": "당신은 전문 운동 코치입니다. 동작 분석 데이터를 보고 명확하고 실용적인 피드백을 제공합니다."
-                    },
-                    {
-                        "role": "user",
-                        "content": prompt
-                    }
-                ],
-                temperature=self.temperature,
-                max_tokens=self.max_tokens,
-                response_format={"type": "json_object"}
+        if self.noop_mode:
+            logger.info("🔄 NOOP 모드: 규칙 기반 피드백 생성")
+            return self._generate_rule_based_feedback(
+                angles, phases, sport_type, sub_category
             )
 
-            feedback_text = response.choices[0].message.content
-            feedback = json.loads(feedback_text)
+        try:
+            messages = self._build_prompt(sport_type, sub_category, angles, phases)
 
-            logger.info(f"✅ LLM 피드백 생성 완료: {sport_type}/{sub_category}")
+            logger.info(
+                f"📤 LLM 호출: {sport_type}/{sub_category}, "
+                f"prompt_version={messages['version']}"
+            )
 
-            return feedback
+            response = await self.client.chat.completions.create(
+                model=self.model,
+                messages=[
+                    {"role": "system", "content": messages["system"]},
+                    {"role": "user", "content": messages["user"]},
+                ],
+                response_format={"type": "json_object"},
+                temperature=0.7,
+                max_tokens=1000,
+            )
 
+            content = response.choices[0].message.content
+            result = json.loads(content)
+            result["prompt_version"] = messages["version"]
+
+            logger.info(
+                f"✅ LLM 응답: score={result.get('overall_score')}, "
+                f"version={messages['version']}"
+            )
+
+            return result
+
+        except json.JSONDecodeError as e:
+            logger.error(f"❌ LLM 응답 파싱 실패: {e}")
+            raise AnalyzerError(
+                error_code=ErrorCode.LLM_TIMEOUT,
+                custom_message="LLM 응답 파싱 실패",
+                error=str(e),
+            )
         except Exception as e:
             logger.error(f"❌ LLM 피드백 생성 실패: {e}")
-            return self._generate_error_feedback(str(e))
+            raise AnalyzerError(
+                error_code=ErrorCode.LLM_TIMEOUT,
+                custom_message="LLM 피드백 생성 실패",
+                error=str(e),
+            )
 
     def _build_prompt(
-            self,
-            sport_type: str,
-            sub_category: str,
-            average_angles: Dict[str, float],
-            phases: List[Dict],
-            sport_config: Dict
-    ) -> str:
-        """프롬프트 생성"""
+        self,
+        sport_type: str,
+        sub_category: str,
+        angles: List[Dict[str, Any]],
+        phases: List[Dict[str, Any]],
+    ) -> Dict[str, str]:
+        """
+        프롬프트 생성 (YAML 기반 + Git 버전 자동).
+
+        Before (하드코딩):
+            200줄의 if-else 지옥 + 수동 버전 관리
+
+        After (YAML + Git):
+            1줄로 해결 + 자동 버전 관리!
+        """
+        return prompt_loader.load(
+            sport_type=sport_type,
+            sub_category=sub_category,
+            context={"angles": angles, "phases": phases},
+        )
+
+    def _generate_rule_based_feedback(
+        self,
+        angles: List[Dict[str, Any]],
+        phases: List[Dict[str, Any]],
+        sport_config: Dict[str, Any],
+    ) -> Dict[str, Any]:
+        """규칙 기반 피드백 (JSON의 ideal_range 사용)"""
+        if not angles:
+            return {
+                "overall_score": 50,
+                "feedback": "각도 데이터가 충분하지 않습니다.",
+                "improvements": ["영상에서 신체가 명확히 보이도록 촬영해주세요"],
+                "prompt_version": "noop",
+            }
+
+        angle_scores = []
+        good_points = []
+        improvements = []
 
         angle_configs = sport_config.get("angles", {})
 
-        angle_analysis = []
-        for angle_name, angle_value in average_angles.items():
-            if angle_value is None:
-                continue
+        for angle in angles:
+            angle_name = angle.get("name", "")
+            avg = angle.get("average", 0)
 
             angle_config = angle_configs.get(angle_name, {})
-            ideal_range = angle_config.get("ideal_range")
-            description = angle_config.get("description", angle_name)
+            ideal_range = angle_config.get("ideal_range", [0, 180])
+            ideal_min, ideal_max = ideal_range
 
-            angle_info = {
-                "name": description,
-                "current_value": angle_value,
-                "ideal_range": list(ideal_range) if ideal_range else None
-            }
-            angle_analysis.append(angle_info)
+            if ideal_min <= avg <= ideal_max:
+                angle_scores.append(95)
+                good_points.append(f"{angle_name}: {avg:.1f}도 (이상적)")
+            elif ideal_min - 10 <= avg <= ideal_max + 10:
+                angle_scores.append(80)
+                improvements.append(
+                    f"{angle_name}를 {ideal_min}~{ideal_max}도 범위로 조정 (현재: {avg:.1f}도)"
+                )
+            else:
+                angle_scores.append(65)
+                improvements.append(
+                    f"{angle_name} 개선 필요 (현재: {avg:.1f}도, 권장: {ideal_min}~{ideal_max}도)"
+                )
 
-        phase_summary = [
-            {"name": p["name"], "duration_ms": p["duration_ms"]}
-            for p in phases
-        ]
+        overall_score = sum(angle_scores) // len(angle_scores) if angle_scores else 70
 
-        prompt = f"""
-# 동작 분석 데이터
+        feedback_parts = []
+        if good_points:
+            feedback_parts.append(f"✅ 강점: {', '.join(good_points[:2])}")
+        if improvements:
+            feedback_parts.append(f"📌 개선: {improvements[0]}")
 
-종목: {sport_type} - {sub_category}
+        feedback = " | ".join(feedback_parts) if feedback_parts else "분석 완료"
 
-측정된 각도 (평균):
-{json.dumps(angle_analysis, indent=2, ensure_ascii=False)}
+        logger.info(f"✅ 규칙 기반 피드백: score={overall_score}")
 
-구간 데이터:
-{json.dumps(phase_summary, indent=2, ensure_ascii=False)}
-
----
-
-위 데이터를 분석하여 다음 형식의 JSON을 생성해주세요:
-
-{{
-  "overall_score": 85,
-  "feedback": "전반적으로 좋은 자세입니다.",
-  "improvements": [
-    {{
-      "issue": "왼팔 각도가 이상 범위보다 낮습니다",
-      "current_value": 158.3,
-      "ideal_range": [165.0, 180.0],
-      "suggestion": "백스윙 시 왼팔을 더 펴주세요"
-    }}
-  ]
-}}
-
-요구사항:
-1. overall_score: 0-100점
-2. feedback: 2-3문장 (한글)
-3. improvements: 최대 3개 (이상 범위 밖만)
-"""
-
-        return prompt
-
-    def _generate_noop_feedback(
-            self,
-            sport_type: str,
-            sub_category: str,
-            average_angles: Dict[str, float]
-    ) -> Dict:
-        """Noop 모드 더미 피드백"""
         return {
-            "overall_score": 85,
-            "feedback": f"[Noop 모드] {sport_type}/{sub_category} 분석 완료",
-            "improvements": [
-                {
-                    "issue": "왼팔 각도 확인 필요",
-                    "current_value": average_angles.get("left_arm_angle", 0),
-                    "ideal_range": [165.0, 180.0],
-                    "suggestion": "백스윙 시 왼팔을 더 펴주세요 (Noop)"
-                }
-            ]
-        }
-
-    def _generate_error_feedback(self, error_message: str) -> Dict:
-        """에러 폴백"""
-        return {
-            "overall_score": 0,
-            "feedback": f"피드백 생성 오류: {error_message}",
-            "improvements": []
+            "overall_score": overall_score,
+            "feedback": feedback,
+            "improvements": improvements[:3],
+            "prompt_version": "noop",
         }

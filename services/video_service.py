@@ -1,110 +1,149 @@
+"""
+MotionLab AI - 영상 서비스
+"""
+
 import os
-import cv2
-import requests
+import time
+import logging
+from typing import Dict, Any, Optional
 from pathlib import Path
-from typing import Optional, Dict
-from urllib.parse import urlparse
-from config.settings import get_settings
+import yt_dlp
+import cv2
+
+from utils.exceptions import (
+    AnalyzerError,
+    ErrorCode,
+    VideoDownloadError,
+    VideoNotFoundError,
+    VideoProcessingError,
+)
+
+logger = logging.getLogger(__name__)
+
+
+class VideoResource:
+    """영상 리소스 Context Manager"""
+
+    def __init__(
+        self,
+        motion_id: int,
+        video_url: str,
+        output_dir: str = "./temp_videos",
+        max_retries: int = 3,
+    ):
+        self.motion_id = motion_id
+        self.video_url = video_url
+        self.output_dir = Path(output_dir)
+        self.max_retries = max_retries
+        self.video_path: Optional[str] = None
+
+    async def __aenter__(self) -> str:
+        """영상 다운로드"""
+        try:
+            self.output_dir.mkdir(parents=True, exist_ok=True)
+            self.video_path = await self._download_video()
+            logger.info(f"✅ 영상 다운로드 완료: {self.video_path}")
+            return self.video_path
+        except Exception as e:
+            logger.error(f"❌ 영상 다운로드 실패: {e}")
+            raise
+
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        """영상 파일 삭제"""
+        if self.video_path and os.path.exists(self.video_path):
+            await self._safe_cleanup()
+        return False
+
+    async def _download_video(self) -> str:
+        """영상 다운로드"""
+        output_path = str(self.output_dir / f"{self.motion_id}.mp4")
+
+        if self.video_url.startswith(("/", "./")) or os.path.exists(self.video_url):
+            if os.path.exists(self.video_url):
+                return self.video_url
+            else:
+                raise VideoNotFoundError(
+                    details=f"motion_id={self.motion_id}, path={self.video_url}"
+                )
+
+        ydl_opts = {
+            "format": "best[ext=mp4]/best",
+            "outtmpl": output_path,
+            "quiet": True,
+            "no_warnings": True,
+        }
+
+        for attempt in range(self.max_retries):
+            try:
+                logger.info(f"[{attempt + 1}/{self.max_retries}] 영상 다운로드 중...")
+                with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                    ydl.download([self.video_url])
+
+                if os.path.exists(output_path):
+                    return output_path
+
+            except Exception as e:
+                if attempt == self.max_retries - 1:
+                    raise VideoDownloadError(
+                        details=f"motion_id={self.motion_id}, url={self.video_url}, error={str(e)}"
+                    )
+                time.sleep(1)
+
+        raise VideoDownloadError(
+            details=f"motion_id={self.motion_id}, retries={self.max_retries}"
+        )
+
+    async def _safe_cleanup(self):
+        """파일 삭제"""
+        if not self.video_path:
+            return
+
+        for attempt in range(self.max_retries):
+            try:
+                if os.path.exists(self.video_path):
+                    os.remove(self.video_path)
+                    logger.info(f"🗑️ 파일 삭제 완료: {self.video_path}")
+                    return
+            except Exception as e:
+                if attempt < self.max_retries - 1:
+                    time.sleep(0.5)
+                else:
+                    logger.error(f"⚠️ 파일 삭제 실패: {self.video_path}")
 
 
 class VideoService:
-    """영상 다운로드 및 메타데이터 추출 서비스"""
+    """영상 메타데이터 추출"""
 
-    def __init__(self):
-        settings = get_settings()
-        self.temp_dir = Path(settings.TEMP_VIDEO_DIR)
-        self.temp_dir.mkdir(parents=True, exist_ok=True)
-        self.max_size_mb = settings.MAX_VIDEO_SIZE_MB
+    @staticmethod
+    def extract_metadata(video_path: str) -> Dict[str, Any]:
+        """메타데이터 추출"""
+        cap = None
+        try:
+            cap = cv2.VideoCapture(video_path)
 
-    def get_video_path(self, motion_id: int, video_url: str) -> str:
-        """
-        영상 URL을 로컬 경로로 변환
-        - 로컬 경로: 그대로 반환
-        - Presigned URL: 다운로드 후 임시 경로 반환
-        """
-        if self._is_local_path(video_url):
-            return self._handle_local_path(video_url)
-        else:
-            return self._download_from_url(motion_id, video_url)
+            if not cap.isOpened():
+                raise VideoProcessingError(
+                    details=f"영상 파일을 열 수 없습니다: {video_path}"
+                )
 
-    def extract_metadata(self, video_path: str) -> Dict:
-        """영상 메타데이터 추출"""
-        cap = cv2.VideoCapture(video_path)
+            fps = int(cap.get(cv2.CAP_PROP_FPS))
+            frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+            width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+            height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+            duration = frame_count / fps if fps > 0 else 0
 
-        if not cap.isOpened():
-            raise ValueError(f"Cannot open video: {video_path}")
+            return {
+                "fps": fps,
+                "frame_count": frame_count,
+                "width": width,
+                "height": height,
+                "duration_seconds": round(duration, 2),
+            }
 
-        metadata = {
-            "width": int(cap.get(cv2.CAP_PROP_FRAME_WIDTH)),
-            "height": int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT)),
-            "fps": cap.get(cv2.CAP_PROP_FPS),
-            "total_frames": int(cap.get(cv2.CAP_PROP_FRAME_COUNT)),
-            "duration_seconds": int(cap.get(cv2.CAP_PROP_FRAME_COUNT) / cap.get(cv2.CAP_PROP_FPS)),
-            "codec": int(cap.get(cv2.CAP_PROP_FOURCC)),
-            "file_size_mb": round(os.path.getsize(video_path) / (1024 * 1024), 2)
-        }
-
-        cap.release()
-        return metadata
-
-    def cleanup(self, video_path: str) -> None:
-        """임시 파일 삭제"""
-        if video_path.startswith(str(self.temp_dir)) and os.path.exists(video_path):
-            os.remove(video_path)
-            print(f"✅ 임시 파일 삭제: {video_path}")
-
-    def _is_local_path(self, video_url: str) -> bool:
-        """로컬 경로 여부 확인"""
-        parsed = urlparse(video_url)
-        return parsed.scheme in ('', 'file') or video_url.startswith('/')
-
-    def _download_from_url(self, motion_id: int, video_url: str) -> str:
-        """Presigned URL에서 영상 다운로드"""
-        # 1) HEAD 요청으로 파일 크기 확인
-        head_response = requests.head(video_url, timeout=10)
-        content_length = int(head_response.headers.get('Content-Length', 0))
-        size_mb = content_length / (1024 * 1024)
-
-        if size_mb > self.max_size_mb:
-            raise ValueError(
-                f"Video size ({size_mb:.2f}MB) exceeds limit ({self.max_size_mb}MB)"
-            )
-
-        # 2) 임시 파일 경로 생성
-        temp_path = self.temp_dir / f"motion_{motion_id}.mp4"
-
-        # 3) 다운로드 (1MB 단위 청크)
-        response = requests.get(video_url, stream=True, timeout=60)
-        response.raise_for_status()
-
-        downloaded_size = 0
-        with open(temp_path, 'wb') as f:
-            for chunk in response.iter_content(chunk_size=1024 * 1024):  # 1MB
-                if chunk:
-                    f.write(chunk)
-                    downloaded_size += len(chunk)
-
-                    # 실시간 용량 체크
-                    if downloaded_size > self.max_size_mb * 1024 * 1024:
-                        f.close()
-                        os.remove(temp_path)
-                        raise ValueError("Video size exceeded during download")
-
-        print(f"✅ 영상 다운로드 완료: {temp_path} ({size_mb:.2f}MB)")
-        return str(temp_path)
-
-    def _handle_local_path(self, video_url: str) -> str:
-        """로컬 경로 검증 및 절대 경로 변환"""
-        path = video_url.replace('file://', '')
-        abs_path = Path(path).resolve()
-
-        if not abs_path.exists():
-            raise FileNotFoundError(
-                f"영상 파일을 찾을 수 없습니다.\n"
-                f"입력: {video_url}\n"
-                f"절대 경로: {abs_path}"
-            )
-
-        print(f"📁 로컬 파일 사용: {abs_path}")
-
-        return str(abs_path)
+        except (VideoNotFoundError, VideoDownloadError, VideoProcessingError):
+            raise
+        except Exception as e:
+            raise VideoProcessingError(details=f"메타데이터 추출 실패: {str(e)}")
+        finally:
+            if cap is not None:
+                cap.release()
