@@ -5,16 +5,9 @@
 import logging
 from typing import Optional
 
-from config.settings import get_settings
 from core import MediaPipeAnalyzer, AngleCalculator, PhaseDetector, LLMFeedback
-from core.sport_configs import get_sport_config  # ← JSON 로더 함수
+from core.sport_configs import get_sport_config
 from models import AnalysisResponse, AnalysisResult, PhaseInfo
-from utils.exceptions import (
-    NoKeypointsError,
-    VideoProcessingError,
-    UnsupportedSportError,
-    ErrorCode,
-)
 from utils.decorators import measure_time, log_execution
 from .video_service import VideoResource, VideoService
 

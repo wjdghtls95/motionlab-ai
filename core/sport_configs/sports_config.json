@@ -1,12 +1,19 @@
 {
   "GOLF": {
     "name": "Golf Swing",
+    "angle_validation": {
+      "min_normal": 30,
+      "max_normal": 170,
+      "score_good": 85,
+      "score_warning": 60,
+      "description": "일반적인 골프 스윙 범위 (각도별로 다름)"
+    },
     "sub_categories": {
       "DRIVER": {
         "name": "Driver",
         "display_name": "드라이버",
         "phases": ["address", "backswing", "backswing_top", "downswing", "impact", "follow_through"],
-        "primary_angles": ["spine_angle", "left_arm_angle", "shoulder_rotation", "hip_rotation"],
+        "angles": ["spine_angle", "left_arm_angle", "shoulder_rotation", "hip_rotation"],
         "angle_diff": {
           "backswing_top_shoulder_rotation": { "min": 85, "max": 95 }
         }
@@ -15,7 +22,7 @@
         "name": "Iron",
         "display_name": "아이언",
         "phases": ["address", "backswing", "backswing_top", "downswing", "impact", "follow_through"],
-        "primary_angles": ["spine_angle", "left_arm_angle", "shoulder_rotation", "hip_rotation"],
+        "angles": ["spine_angle", "left_arm_angle", "shoulder_rotation", "hip_rotation"],
         "angle_diff": {
           "backswing_top_shoulder_rotation": { "min": 75, "max": 85 }
         }
@@ -24,7 +31,7 @@
         "name": "Putter",
         "display_name": "퍼터",
         "phases": ["address", "backswing", "impact", "follow_through"],
-        "primary_angles": ["spine_angle", "shoulder_tilt"],
+        "angles": ["spine_angle", "shoulder_tilt"],
         "angle_diff": {
           "backswing_shoulder_tilt": { "min": 15, "max": 25 }
         }
@@ -38,12 +45,19 @@
 
   "WEIGHT": {
     "name": "Weight Training",
+    "angle_validation": {
+      "min_normal": 40,
+      "max_normal": 175,
+      "score_good": 85,
+      "score_warning": 60,
+      "description": "웨이트 트레이닝 일반 범위 (운동별로 차이 큼)"
+    },
     "sub_categories": {
       "SQUAT": {
         "name": "Squat",
         "display_name": "스쿼트",
         "phases": ["start", "descent", "bottom", "ascent", "finish"],
-        "primary_angles": ["hip_flexion", "knee_flexion", "spine_angle", "ankle_dorsiflexion"],
+        "angles": ["hip_flexion", "knee_flexion", "spine_angle", "ankle_dorsiflexion"],
         "angle_diff": {
           "bottom_knee_flexion": { "min": 85, "max": 95 }
         }
@@ -52,7 +66,7 @@
         "name": "Deadlift",
         "display_name": "데드리프트",
         "phases": ["start", "lift_off", "mid_pull", "lockout", "finish"],
-        "primary_angles": ["hip_flexion", "spine_angle", "shoulder_protraction"],
+        "angles": ["hip_flexion", "spine_angle", "shoulder_protraction"],
         "angle_diff": {
           "mid_pull_spine_angle": { "min": 5, "max": 15 }
         }
@@ -61,7 +75,7 @@
         "name": "Bench Press",
         "display_name": "벤치프레스",
         "phases": ["start", "descent", "bottom", "press", "lockout"],
-        "primary_angles": ["elbow_flexion", "shoulder_abduction", "wrist_angle"],
+        "angles": ["elbow_flexion", "shoulder_abduction", "wrist_angle"],
         "angle_diff": {
           "bottom_elbow_flexion": { "min": 85, "max": 95 }
         }
@@ -75,12 +89,18 @@
 
   "TENNIS": {
     "name": "Tennis",
+    "angle_validation": {
+      "min_normal": 40,
+      "max_normal": 175,
+      "score_good": 85,
+      "score_warning": 60
+    },
     "sub_categories": {
       "SERVE": {
         "name": "Serve",
         "display_name": "서브",
         "phases": ["start", "ball_toss", "cocking", "acceleration", "impact", "follow_through"],
-        "primary_angles": ["shoulder_external_rotation", "elbow_flexion", "spine_lateral_flexion"],
+        "angles": ["shoulder_external_rotation", "elbow_flexion", "spine_lateral_flexion"],
         "angle_diff": {
           "cocking_shoulder_external_rotation": { "min": 160, "max": 180 }
         }
@@ -89,7 +109,7 @@
         "name": "Forehand",
         "display_name": "포핸드",
         "phases": ["ready", "backswing", "forward_swing", "impact", "follow_through"],
-        "primary_angles": ["shoulder_rotation", "elbow_flexion", "wrist_angle"],
+        "angles": ["shoulder_rotation", "elbow_flexion", "wrist_angle"],
         "angle_diff": {
           "impact_shoulder_rotation": { "min": 85, "max": 95 }
         }
@@ -98,7 +118,7 @@
         "name": "Backhand",
         "display_name": "백핸드",
         "phases": ["ready", "backswing", "forward_swing", "impact", "follow_through"],
-        "primary_angles": ["shoulder_rotation", "elbow_flexion", "wrist_angle"],
+        "angles": ["shoulder_rotation", "elbow_flexion", "wrist_angle"],
         "angle_diff": {
           "impact_shoulder_rotation": { "min": 80, "max": 90 }
         }

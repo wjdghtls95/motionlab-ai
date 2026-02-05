@@ -33,7 +33,7 @@ def get_sport_config(sport_type: str, sub_category: str) -> Dict[str, Any]:
         sub_category: DRIVER, SQUAT 등
 
     Returns:
-        {"angles": {...}, "phases": [...]}
+        {"angles": {...}, "phases": [...], "angle_validation": {...}}
     """
     config = load_sports_config()
 
@@ -51,7 +51,11 @@ def get_sport_config(sport_type: str, sub_category: str) -> Dict[str, Any]:
             f"지원하지 않는 서브카테고리: {sub_category}. " f"사용 가능: {available}"
         )
 
-    return {"angles": sub["angles"], "phases": sub["phases"]}
+    return {
+        "angles": sub["angles"],
+        "phases": sub["phases"],
+        "angle_validation": sport.get("angle_validation", {}),
+    }
 
 
-SPORT_CONFIGS = None
+__all__ = ["load_sports_config", "get_sport_config"]

@@ -11,8 +11,6 @@ import yt_dlp
 import cv2
 
 from utils.exceptions import (
-    AnalyzerError,
-    ErrorCode,
     VideoDownloadError,
     VideoNotFoundError,
     VideoProcessingError,
@@ -36,6 +34,7 @@ class VideoResource:
         self.output_dir = Path(output_dir)
         self.max_retries = max_retries
         self.video_path: Optional[str] = None
+        self.is_local_file = False
 
     async def __aenter__(self) -> str:
         """영상 다운로드"""
@@ -49,9 +48,12 @@ class VideoResource:
             raise
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
-        """영상 파일 삭제"""
-        if self.video_path and os.path.exists(self.video_path):
-            await self._safe_cleanup()
+        """임시 파일 정리 (로컬 파일은 보존)"""
+        if self.video_path:
+            if self.is_local_file:
+                logger.info(f"✅ Local file preserved: {self.video_path}")
+            else:
+                await self._safe_cleanup()
         return False
 
     async def _download_video(self) -> str:
@@ -60,11 +62,16 @@ class VideoResource:
 
         if self.video_url.startswith(("/", "./")) or os.path.exists(self.video_url):
             if os.path.exists(self.video_url):
+                logger.info(f"✅ 로컬 파일 사용: {self.video_url}")
+                self.is_local_file = True  # 플래그 설정
+
                 return self.video_url
             else:
                 raise VideoNotFoundError(
                     details=f"motion_id={self.motion_id}, path={self.video_url}"
                 )
+
+        self.is_local_file = False  # 다운로드 파일 표시
 
         ydl_opts = {
             "format": "best[ext=mp4]/best",

@@ -75,6 +75,31 @@ ERROR_REGISTRY: Dict[str, Dict[str, Any]] = {
         "status_code": status.HTTP_500_INTERNAL_SERVER_ERROR,
         "retryable": True,
     },
+    # LLM Errors (신규 추가)
+    "LLM_001": {
+        "name": "LLMTimeoutError",
+        "message_ko": "AI 피드백 생성 시간이 초과되었습니다",
+        "status_code": status.HTTP_504_GATEWAY_TIMEOUT,
+        "retryable": True,
+    },
+    "LLM_002": {
+        "name": "LLMParseError",
+        "message_ko": "AI 응답 형식이 올바르지 않습니다",
+        "status_code": status.HTTP_500_INTERNAL_SERVER_ERROR,
+        "retryable": False,  # 파싱 오류는 재시도해도 동일
+    },
+    "LLM_003": {
+        "name": "LLMGenerationError",
+        "message_ko": "AI 피드백 생성 중 오류가 발생했습니다",
+        "status_code": status.HTTP_500_INTERNAL_SERVER_ERROR,
+        "retryable": True,  # 일반 오류는 재시도 가능
+    },
+    "LLM_004": {
+        "name": "LLMInvalidResponseError",
+        "message_ko": "AI 응답이 유효하지 않습니다",
+        "status_code": status.HTTP_500_INTERNAL_SERVER_ERROR,
+        "retryable": False,
+    },
     # Validation Errors
     "VAL_000": {
         "name": "InvalidRequestError",
@@ -103,6 +128,12 @@ class ErrorCode:
     VIDEO_PROCESSING_ERROR = "SYS_013"
     ANALYSIS_TIMEOUT = "SYS_021"
     SYSTEM_ERROR = "SYS_999"
+
+    # LLM Errors
+    LLM_TIMEOUT = "LLM_001"
+    LLM_PARSE_ERROR = "LLM_002"
+    LLM_GENERATION_ERROR = "LLM_003"
+    LLM_INVALID_RESPONSE = "LLM_004"
 
     # Validation Errors
     INVALID_REQUEST = "VAL_000"
@@ -157,8 +188,6 @@ class AnalyzerError(Exception):
 
 
 # ========== 도메인별 예외 클래스 (편의성) ==========
-
-
 class NoKeypointsError(AnalyzerError):
     """키포인트 미감지 에러"""
 
@@ -222,9 +251,43 @@ class AnalysisTimeoutError(AnalyzerError):
         super().__init__(ErrorCode.ANALYSIS_TIMEOUT, details)
 
 
+class InvalidRequestError(AnalyzerError):
+    """잘못된 요청 에러"""
+
+    def __init__(self, details: Optional[str] = None):
+        super().__init__(ErrorCode.INVALID_REQUEST, details)
+
+
+# LLM 예외 클래스
+class LLMTimeoutError(AnalyzerError):
+    """LLM 타임아웃 에러"""
+
+    def __init__(self, details: Optional[str] = None):
+        super().__init__(ErrorCode.LLM_TIMEOUT, details)
+
+
+class LLMParseError(AnalyzerError):
+    """LLM 응답 파싱 에러"""
+
+    def __init__(self, details: Optional[str] = None):
+        super().__init__(ErrorCode.LLM_PARSE_ERROR, details)
+
+
+class LLMGenerationError(AnalyzerError):
+    """LLM 피드백 생성 에러"""
+
+    def __init__(self, details: Optional[str] = None):
+        super().__init__(ErrorCode.LLM_GENERATION_ERROR, details)
+
+
+class LLMInvalidResponseError(AnalyzerError):
+    """LLM 응답 검증 에러"""
+
+    def __init__(self, details: Optional[str] = None):
+        super().__init__(ErrorCode.LLM_INVALID_RESPONSE, details)
+
+
 # ========== 편의 함수 ==========
-
-
 def get_error_info(error_code: str) -> Dict[str, Any]:
     """
     에러 코드로 메타데이터 조회

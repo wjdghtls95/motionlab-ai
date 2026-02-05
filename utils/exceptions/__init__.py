@@ -15,6 +15,9 @@ from .errors import (
     VideoDownloadError,
     VideoProcessingError,
     AnalysisTimeoutError,
+    LLMParseError,
+    LLMInvalidResponseError,
+    LLMGenerationError,
     get_error_info,
     raise_error,
 )
@@ -32,6 +35,9 @@ __all__ = [
     "VideoDownloadError",
     "VideoProcessingError",
     "AnalysisTimeoutError",
+    "LLMParseError",
+    "LLMInvalidResponseError",
+    "LLMGenerationError",
     "get_error_info",
     "raise_error",
 ]
