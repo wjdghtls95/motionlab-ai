@@ -40,9 +40,7 @@ def get_sport_config(sport_type: str, sub_category: str) -> Dict[str, Any]:
     sport = config.get(sport_type)
     if not sport:
         available = list(config.keys())
-        raise ValueError(
-            f"지원하지 않는 종목: {sport_type}. " f"사용 가능: {available}"
-        )
+        raise ValueError(f"지원하지 않는 종목: {sport_type} " f"사용 가능: {available}")
 
     sub = sport["sub_categories"].get(sub_category)
     if not sub:

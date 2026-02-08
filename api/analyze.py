@@ -16,6 +16,9 @@ import logging
 router = APIRouter(prefix="", tags=["Analysis"])
 logger = logging.getLogger(__name__)
 
+# 비즈니스 로직은 서비스로 위임
+analysis_service = AnalysisService()
+
 
 @router.post(
     "/analyze",
@@ -46,9 +49,6 @@ async def analyze_motion(request: AnalysisRequest):
     )
 
     try:
-        # 비즈니스 로직은 서비스로 위임
-        analysis_service = AnalysisService()
-
         result = await analysis_service.analyze(
             motion_id=request.motion_id,
             video_url=request.video_url,
