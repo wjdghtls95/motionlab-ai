@@ -8,9 +8,10 @@
 
 from fastapi import APIRouter, Depends, HTTPException
 from models import AnalysisRequest, AnalysisResponse, ErrorResponse
+from models.responses import create_error_response
 from services.analysis_service import AnalysisService
 from utils.dependencies import verify_api_key
-from utils.exceptions import AnalyzerError
+from utils.exceptions import AnalyzerError, get_error_info, ErrorCode
 import logging
 
 router = APIRouter(prefix="", tags=["Analysis"])
@@ -34,15 +35,6 @@ analysis_service = AnalysisService()
 async def analyze_motion(request: AnalysisRequest):
     """
     운동 영상 분석 엔드포인트
-
-    Args:
-        request: AnalysisRequest (motion_id, video_url, sport_type, sub_category)
-
-    Returns:
-        AnalysisResponse: 분석 결과 + LLM 피드백
-
-    Raises:
-        HTTPException: 에러 발생 시 (error_code, message, retryable 포함)
     """
     logger.info(
         f"분석 요청 수신: motion_id={request.motion_id}, sport_type={request.sport_type}"
@@ -66,7 +58,12 @@ async def analyze_motion(request: AnalysisRequest):
             exc_info=False,  # 스택 트레이스 안 찍음 (사용자 과실)
         )
 
-        raise HTTPException(status_code=e.status_code, detail=e.to_dict())
+        return create_error_response(
+            error_code=e.error_code,
+            message=e.message,
+            retryable=e.retryable,
+            details=e.details,
+        )
 
     except Exception as e:
         # 예상치 못한 에러
@@ -75,12 +72,10 @@ async def analyze_motion(request: AnalysisRequest):
             exc_info=True,  # 개발 환경에서만 스택 트레이스
         )
 
-        raise HTTPException(
-            status_code=500,
-            detail={
-                "success": False,
-                "error_code": "SYS_999",
-                "message": str(e),
-                "retryable": True,
-            },
+        info = get_error_info(ErrorCode.SYSTEM_ERROR)
+        return create_error_response(
+            error_code=ErrorCode.SYSTEM_ERROR,
+            message=info["message_ko"],
+            retryable=info["retryable"],
+            details=str(e),
         )

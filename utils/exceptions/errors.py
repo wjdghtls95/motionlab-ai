@@ -173,14 +173,14 @@ class AnalyzerError(Exception):
 
         Returns:
             {
-                "code": "AN_001",
+                "error_code": "AN_001",
                 "message": "영상에서 사람의 움직임을 감지할 수 없습니다",
                 "retryable": false,
                 "details": "MediaPipe 결과 없음"
             }
         """
         return {
-            "code": self.error_code,
+            "error_code": self.error_code,
             "message": self.message,
             "retryable": self.retryable,
             "details": self.details,
