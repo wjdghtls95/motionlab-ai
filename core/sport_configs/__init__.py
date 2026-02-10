@@ -52,7 +52,7 @@ def get_sport_config(sport_type: str, sub_category: str) -> Dict[str, Any]:
     return {
         "angles": sub["angles"],
         "phases": sub["phases"],
-        "angle_validation": sport.get("angle_validation", {}),
+        "angle_validation": sub.get("angle_validation", {}),  # sport → sub
     }
 
 

@@ -1,132 +1,515 @@
 {
   "GOLF": {
     "name": "Golf Swing",
-    "angle_validation": {
-      "min_normal": 30,
-      "max_normal": 170,
-      "score_good": 85,
-      "score_warning": 60,
-      "description": "일반적인 골프 스윙 범위 (각도별로 다름)"
-    },
+    "enabled": true,
+    "data_sources": [
+      { "name": "GolfDB", "url": "https://github.com/wmcnally/golfdb", "license": "MIT" }
+    ],
     "sub_categories": {
       "DRIVER": {
         "name": "Driver",
         "display_name": "드라이버",
-        "phases": ["address", "backswing", "backswing_top", "downswing", "impact", "follow_through"],
-        "angles": ["spine_angle", "left_arm_angle", "shoulder_rotation", "hip_rotation"],
-        "angle_diff": {
-          "backswing_top_shoulder_rotation": { "min": 85, "max": 95 }
+        "angles": {
+          "left_arm_angle": {
+            "points": ["left_shoulder", "left_elbow", "left_wrist"],
+            "ideal_range": [165.0, 180.0],
+            "description": "왼팔 펴짐 각도 (임팩트 시 완전히 펴져야 함)"
+          },
+          "right_arm_angle": {
+            "points": ["right_shoulder", "right_elbow", "right_wrist"],
+            "ideal_range": [165.0, 180.0],
+            "description": "오른팔 펴짐 각도"
+          },
+          "spine_angle": {
+            "points": ["left_hip", "left_shoulder", "nose"],
+            "ideal_range": [150.0, 170.0],
+            "description": "척추 기울기 (어드레스부터 임팩트까지 유지)"
+          },
+          "hip_shoulder_separation": {
+            "points": null,
+            "ideal_range": [40.0, 60.0],
+            "description": "엉덩이-어깨 분리각 (X-Factor, 드라이버는 크게)"
+          },
+          "left_knee_angle": {
+            "points": ["left_hip", "left_knee", "left_ankle"],
+            "ideal_range": [140.0, 170.0],
+            "description": "왼쪽 무릎 굽힘 (안정성 유지)"
+          },
+          "right_knee_angle": {
+            "points": ["right_hip", "right_knee", "right_ankle"],
+            "ideal_range": [140.0, 170.0],
+            "description": "오른쪽 무릎 굽힘 (백스윙 시 체중 지지)"
+          }
+        },
+        "phases": [
+          {
+            "name": "address",
+            "detection_rule": "stabilization",
+            "target_angle": "left_arm_angle",
+            "params": { "threshold": 5.0, "min_frames": 10 }
+          },
+          {
+            "name": "backswing",
+            "detection_rule": "angle_decrease",
+            "target_angle": "left_arm_angle",
+            "params": { "min_change": 15.0 }
+          },
+          {
+            "name": "top",
+            "detection_rule": "angle_min",
+            "target_angle": "left_arm_angle",
+            "params": {}
+          },
+          {
+            "name": "downswing",
+            "detection_rule": "angle_increase",
+            "target_angle": "left_arm_angle",
+            "params": { "min_change": 20.0 }
+          },
+          {
+            "name": "impact",
+            "detection_rule": "angle_max",
+            "target_angle": "left_arm_angle",
+            "params": { "tolerance": 5.0 }
+          },
+          {
+            "name": "follow_through",
+            "detection_rule": "angle_decrease",
+            "target_angle": "left_arm_angle",
+            "params": { "min_change": 10.0 }
+          }
+        ],
+        "angle_validation": {
+          "min_normal": 30,
+          "max_normal": 170,
+          "score_good": 85,
+          "score_warning": 60
         }
       },
       "IRON": {
         "name": "Iron",
         "display_name": "아이언",
-        "phases": ["address", "backswing", "backswing_top", "downswing", "impact", "follow_through"],
-        "angles": ["spine_angle", "left_arm_angle", "shoulder_rotation", "hip_rotation"],
-        "angle_diff": {
-          "backswing_top_shoulder_rotation": { "min": 75, "max": 85 }
+        "angles": {
+          "left_arm_angle": {
+            "points": ["left_shoulder", "left_elbow", "left_wrist"],
+            "ideal_range": [165.0, 180.0],
+            "description": "왼팔 펴짐 각도"
+          },
+          "right_arm_angle": {
+            "points": ["right_shoulder", "right_elbow", "right_wrist"],
+            "ideal_range": [165.0, 180.0],
+            "description": "오른팔 펴짐 각도"
+          },
+          "spine_angle": {
+            "points": ["left_hip", "left_shoulder", "nose"],
+            "ideal_range": [145.0, 165.0],
+            "description": "척추 기울기 (드라이버보다 약간 더 숙임)"
+          },
+          "hip_shoulder_separation": {
+            "points": null,
+            "ideal_range": [35.0, 55.0],
+            "description": "엉덩이-어깨 분리각 (X-Factor)"
+          },
+          "left_knee_angle": {
+            "points": ["left_hip", "left_knee", "left_ankle"],
+            "ideal_range": [140.0, 170.0],
+            "description": "왼쪽 무릎 굽힘"
+          },
+          "right_knee_angle": {
+            "points": ["right_hip", "right_knee", "right_ankle"],
+            "ideal_range": [140.0, 170.0],
+            "description": "오른쪽 무릎 굽힘"
+          }
+        },
+        "phases": [
+          {
+            "name": "address",
+            "detection_rule": "stabilization",
+            "target_angle": "left_arm_angle",
+            "params": { "threshold": 5.0, "min_frames": 10 }
+          },
+          {
+            "name": "backswing",
+            "detection_rule": "angle_decrease",
+            "target_angle": "left_arm_angle",
+            "params": { "min_change": 15.0 }
+          },
+          {
+            "name": "top",
+            "detection_rule": "angle_min",
+            "target_angle": "left_arm_angle",
+            "params": {}
+          },
+          {
+            "name": "downswing",
+            "detection_rule": "angle_increase",
+            "target_angle": "left_arm_angle",
+            "params": { "min_change": 20.0 }
+          },
+          {
+            "name": "impact",
+            "detection_rule": "angle_max",
+            "target_angle": "left_arm_angle",
+            "params": { "tolerance": 5.0 }
+          },
+          {
+            "name": "follow_through",
+            "detection_rule": "angle_decrease",
+            "target_angle": "left_arm_angle",
+            "params": { "min_change": 10.0 }
+          }
+        ],
+        "angle_validation": {
+          "min_normal": 30,
+          "max_normal": 170,
+          "score_good": 85,
+          "score_warning": 60
+        }
+      },
+      "WEDGE": {
+        "name": "Wedge",
+        "display_name": "웨지",
+        "angles": {
+          "left_arm_angle": {
+            "points": ["left_shoulder", "left_elbow", "left_wrist"],
+            "ideal_range": [160.0, 180.0],
+            "description": "왼팔 펴짐 각도 (웨지는 스윙이 짧아 약간 여유)"
+          },
+          "right_arm_angle": {
+            "points": ["right_shoulder", "right_elbow", "right_wrist"],
+            "ideal_range": [160.0, 180.0],
+            "description": "오른팔 펴짐 각도"
+          },
+          "spine_angle": {
+            "points": ["left_hip", "left_shoulder", "nose"],
+            "ideal_range": [140.0, 160.0],
+            "description": "척추 기울기 (웨지는 가장 많이 숙임)"
+          },
+          "hip_shoulder_separation": {
+            "points": null,
+            "ideal_range": [25.0, 45.0],
+            "description": "엉덩이-어깨 분리각 (짧은 스윙으로 작음)"
+          },
+          "left_knee_angle": {
+            "points": ["left_hip", "left_knee", "left_ankle"],
+            "ideal_range": [145.0, 170.0],
+            "description": "왼쪽 무릎 굽힘"
+          },
+          "right_knee_angle": {
+            "points": ["right_hip", "right_knee", "right_ankle"],
+            "ideal_range": [145.0, 170.0],
+            "description": "오른쪽 무릎 굽힘"
+          }
+        },
+        "phases": [
+          {
+            "name": "address",
+            "detection_rule": "stabilization",
+            "target_angle": "left_arm_angle",
+            "params": { "threshold": 5.0, "min_frames": 10 }
+          },
+          {
+            "name": "backswing",
+            "detection_rule": "angle_decrease",
+            "target_angle": "left_arm_angle",
+            "params": { "min_change": 10.0 }
+          },
+          {
+            "name": "top",
+            "detection_rule": "angle_min",
+            "target_angle": "left_arm_angle",
+            "params": {}
+          },
+          {
+            "name": "downswing",
+            "detection_rule": "angle_increase",
+            "target_angle": "left_arm_angle",
+            "params": { "min_change": 15.0 }
+          },
+          {
+            "name": "impact",
+            "detection_rule": "angle_max",
+            "target_angle": "left_arm_angle",
+            "params": { "tolerance": 5.0 }
+          },
+          {
+            "name": "follow_through",
+            "detection_rule": "angle_decrease",
+            "target_angle": "left_arm_angle",
+            "params": { "min_change": 8.0 }
+          }
+        ],
+        "angle_validation": {
+          "min_normal": 30,
+          "max_normal": 170,
+          "score_good": 85,
+          "score_warning": 60
         }
       },
       "PUTTER": {
         "name": "Putter",
         "display_name": "퍼터",
-        "phases": ["address", "backswing", "impact", "follow_through"],
-        "angles": ["spine_angle", "shoulder_tilt"],
-        "angle_diff": {
-          "backswing_shoulder_tilt": { "min": 15, "max": 25 }
+        "angles": {
+          "left_arm_angle": {
+            "points": ["left_shoulder", "left_elbow", "left_wrist"],
+            "ideal_range": [160.0, 175.0],
+            "description": "왼팔 각도 (퍼터는 약간 구부린 상태 유지)"
+          },
+          "right_arm_angle": {
+            "points": ["right_shoulder", "right_elbow", "right_wrist"],
+            "ideal_range": [160.0, 175.0],
+            "description": "오른팔 각도"
+          },
+          "spine_angle": {
+            "points": ["left_hip", "left_shoulder", "nose"],
+            "ideal_range": [135.0, 155.0],
+            "description": "척추 기울기 (퍼터는 가장 많이 숙임)"
+          },
+          "shoulder_tilt": {
+            "points": ["left_shoulder", "right_shoulder", "right_hip"],
+            "ideal_range": [80.0, 100.0],
+            "description": "어깨 기울기 (좌우 수평 유지)"
+          }
+        },
+        "phases": [
+          {
+            "name": "address",
+            "detection_rule": "stabilization",
+            "target_angle": "left_arm_angle",
+            "params": { "threshold": 3.0, "min_frames": 15 }
+          },
+          {
+            "name": "backswing",
+            "detection_rule": "angle_decrease",
+            "target_angle": "left_arm_angle",
+            "params": { "min_change": 5.0 }
+          },
+          {
+            "name": "impact",
+            "detection_rule": "angle_max",
+            "target_angle": "left_arm_angle",
+            "params": { "tolerance": 3.0 }
+          },
+          {
+            "name": "follow_through",
+            "detection_rule": "angle_decrease",
+            "target_angle": "left_arm_angle",
+            "params": { "min_change": 5.0 }
+          }
+        ],
+        "angle_validation": {
+          "min_normal": 30,
+          "max_normal": 175,
+          "score_good": 90,
+          "score_warning": 70
         }
       }
-    },
-    "data_sources": [
-      { "name": "GolfDB", "url": "https://github.com/wmcnally/golfdb", "license": "MIT" }
-    ],
-    "enabled": true
+    }
   },
-
   "WEIGHT": {
     "name": "Weight Training",
-    "angle_validation": {
-      "min_normal": 40,
-      "max_normal": 175,
-      "score_good": 85,
-      "score_warning": 60,
-      "description": "웨이트 트레이닝 일반 범위 (운동별로 차이 큼)"
-    },
+    "enabled": true,
+    "data_sources": [
+      { "name": "NSCA Guidelines", "url": "https://www.nsca.com", "license": "Reference" }
+    ],
     "sub_categories": {
       "SQUAT": {
         "name": "Squat",
         "display_name": "스쿼트",
-        "phases": ["start", "descent", "bottom", "ascent", "finish"],
-        "angles": ["hip_flexion", "knee_flexion", "spine_angle", "ankle_dorsiflexion"],
-        "angle_diff": {
-          "bottom_knee_flexion": { "min": 85, "max": 95 }
+        "angles": {
+          "left_knee_flexion": {
+            "points": ["left_hip", "left_knee", "left_ankle"],
+            "ideal_range": [70.0, 100.0],
+            "description": "왼쪽 무릎 굽힘 (바닥 시 평행 이하)"
+          },
+          "right_knee_flexion": {
+            "points": ["right_hip", "right_knee", "right_ankle"],
+            "ideal_range": [70.0, 100.0],
+            "description": "오른쪽 무릎 굽힘"
+          },
+          "hip_flexion": {
+            "points": ["left_shoulder", "left_hip", "left_knee"],
+            "ideal_range": [60.0, 100.0],
+            "description": "엉덩이 굽힘 각도 (상체 기울기)"
+          },
+          "spine_angle": {
+            "points": ["left_hip", "left_shoulder", "nose"],
+            "ideal_range": [150.0, 175.0],
+            "description": "척추 중립 유지 (허리 둥글어짐 방지)"
+          }
+        },
+        "phases": [
+          {
+            "name": "start",
+            "detection_rule": "stabilization",
+            "target_angle": "left_knee_flexion",
+            "params": { "threshold": 5.0, "min_frames": 10 }
+          },
+          {
+            "name": "descent",
+            "detection_rule": "angle_decrease",
+            "target_angle": "left_knee_flexion",
+            "params": { "min_change": 20.0 }
+          },
+          {
+            "name": "bottom",
+            "detection_rule": "angle_min",
+            "target_angle": "left_knee_flexion",
+            "params": {}
+          },
+          {
+            "name": "ascent",
+            "detection_rule": "angle_increase",
+            "target_angle": "left_knee_flexion",
+            "params": { "min_change": 20.0 }
+          },
+          {
+            "name": "lockout",
+            "detection_rule": "stabilization",
+            "target_angle": "left_knee_flexion",
+            "params": { "threshold": 5.0, "min_frames": 5 }
+          }
+        ],
+        "angle_validation": {
+          "min_normal": 40,
+          "max_normal": 180,
+          "score_good": 85,
+          "score_warning": 60
         }
       },
       "DEADLIFT": {
         "name": "Deadlift",
         "display_name": "데드리프트",
-        "phases": ["start", "lift_off", "mid_pull", "lockout", "finish"],
-        "angles": ["hip_flexion", "spine_angle", "shoulder_protraction"],
-        "angle_diff": {
-          "mid_pull_spine_angle": { "min": 5, "max": 15 }
+        "angles": {
+          "hip_flexion": {
+            "points": ["left_shoulder", "left_hip", "left_knee"],
+            "ideal_range": [70.0, 110.0],
+            "description": "엉덩이 힌지 각도 (핵심 동작)"
+          },
+          "left_knee_flexion": {
+            "points": ["left_hip", "left_knee", "left_ankle"],
+            "ideal_range": [140.0, 170.0],
+            "description": "왼쪽 무릎 굽힘 (스쿼트보다 적게 굽힘)"
+          },
+          "right_knee_flexion": {
+            "points": ["right_hip", "right_knee", "right_ankle"],
+            "ideal_range": [140.0, 170.0],
+            "description": "오른쪽 무릎 굽힘"
+          },
+          "spine_angle": {
+            "points": ["left_hip", "left_shoulder", "nose"],
+            "ideal_range": [155.0, 175.0],
+            "description": "척추 중립 (둥근 등 방지, 부상 핵심)"
+          },
+          "shoulder_alignment": {
+            "points": ["left_elbow", "left_shoulder", "left_hip"],
+            "ideal_range": [160.0, 180.0],
+            "description": "어깨-팔 정렬 (바벨이 어깨 아래 수직)"
+          }
+        },
+        "phases": [
+          {
+            "name": "setup",
+            "detection_rule": "stabilization",
+            "target_angle": "hip_flexion",
+            "params": { "threshold": 5.0, "min_frames": 10 }
+          },
+          {
+            "name": "pull",
+            "detection_rule": "angle_increase",
+            "target_angle": "hip_flexion",
+            "params": { "min_change": 25.0 }
+          },
+          {
+            "name": "lockout",
+            "detection_rule": "angle_max",
+            "target_angle": "hip_flexion",
+            "params": { "tolerance": 5.0 }
+          },
+          {
+            "name": "descent",
+            "detection_rule": "angle_decrease",
+            "target_angle": "hip_flexion",
+            "params": { "min_change": 25.0 }
+          },
+          {
+            "name": "finish",
+            "detection_rule": "stabilization",
+            "target_angle": "hip_flexion",
+            "params": { "threshold": 5.0, "min_frames": 5 }
+          }
+        ],
+        "angle_validation": {
+          "min_normal": 40,
+          "max_normal": 180,
+          "score_good": 85,
+          "score_warning": 60
         }
       },
       "BENCH_PRESS": {
         "name": "Bench Press",
         "display_name": "벤치프레스",
-        "phases": ["start", "descent", "bottom", "press", "lockout"],
-        "angles": ["elbow_flexion", "shoulder_abduction", "wrist_angle"],
-        "angle_diff": {
-          "bottom_elbow_flexion": { "min": 85, "max": 95 }
+        "angles": {
+          "left_elbow_flexion": {
+            "points": ["left_shoulder", "left_elbow", "left_wrist"],
+            "ideal_range": [80.0, 100.0],
+            "description": "왼쪽 팔꿈치 굽힘 (바닥 시 약 90도)"
+          },
+          "right_elbow_flexion": {
+            "points": ["right_shoulder", "right_elbow", "right_wrist"],
+            "ideal_range": [80.0, 100.0],
+            "description": "오른쪽 팔꿈치 굽힘"
+          },
+          "shoulder_abduction": {
+            "points": ["left_hip", "left_shoulder", "left_elbow"],
+            "ideal_range": [45.0, 75.0],
+            "description": "어깨 벌림 각도 (45~75도 권장, 너무 벌리면 부상)"
+          },
+          "wrist_alignment": {
+            "points": ["left_elbow", "left_wrist", "left_index"],
+            "ideal_range": [170.0, 180.0],
+            "description": "손목 정렬 (손목 꺾임 방지)"
+          }
+        },
+        "phases": [
+          {
+            "name": "start",
+            "detection_rule": "stabilization",
+            "target_angle": "left_elbow_flexion",
+            "params": { "threshold": 5.0, "min_frames": 10 }
+          },
+          {
+            "name": "descent",
+            "detection_rule": "angle_decrease",
+            "target_angle": "left_elbow_flexion",
+            "params": { "min_change": 30.0 }
+          },
+          {
+            "name": "bottom",
+            "detection_rule": "angle_min",
+            "target_angle": "left_elbow_flexion",
+            "params": {}
+          },
+          {
+            "name": "press",
+            "detection_rule": "angle_increase",
+            "target_angle": "left_elbow_flexion",
+            "params": { "min_change": 30.0 }
+          },
+          {
+            "name": "lockout",
+            "detection_rule": "stabilization",
+            "target_angle": "left_elbow_flexion",
+            "params": { "threshold": 5.0, "min_frames": 5 }
+          }
+        ],
+        "angle_validation": {
+          "min_normal": 30,
+          "max_normal": 180,
+          "score_good": 85,
+          "score_warning": 60
         }
       }
-    },
-    "data_sources": [
-      { "name": "Waseda Squat Dataset", "url": "https://zenodo.org/record/6537253", "license": "CC-BY 4.0" }
-    ],
-    "enabled": true
-  },
-
-  "TENNIS": {
-    "name": "Tennis",
-    "angle_validation": {
-      "min_normal": 40,
-      "max_normal": 175,
-      "score_good": 85,
-      "score_warning": 60
-    },
-    "sub_categories": {
-      "SERVE": {
-        "name": "Serve",
-        "display_name": "서브",
-        "phases": ["start", "ball_toss", "cocking", "acceleration", "impact", "follow_through"],
-        "angles": ["shoulder_external_rotation", "elbow_flexion", "spine_lateral_flexion"],
-        "angle_diff": {
-          "cocking_shoulder_external_rotation": { "min": 160, "max": 180 }
-        }
-      },
-      "FOREHAND": {
-        "name": "Forehand",
-        "display_name": "포핸드",
-        "phases": ["ready", "backswing", "forward_swing", "impact", "follow_through"],
-        "angles": ["shoulder_rotation", "elbow_flexion", "wrist_angle"],
-        "angle_diff": {
-          "impact_shoulder_rotation": { "min": 85, "max": 95 }
-        }
-      },
-      "BACKHAND": {
-        "name": "Backhand",
-        "display_name": "백핸드",
-        "phases": ["ready", "backswing", "forward_swing", "impact", "follow_through"],
-        "angles": ["shoulder_rotation", "elbow_flexion", "wrist_angle"],
-        "angle_diff": {
-          "impact_shoulder_rotation": { "min": 80, "max": 90 }
-        }
-      }
-    },
-    "data_sources": [
-      { "name": "ITF Biomechanics Database", "url": "https://www.itftennis.com" }
-    ],
-    "enabled": true
+    }
   }
 }
