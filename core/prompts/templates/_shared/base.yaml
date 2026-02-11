@@ -19,6 +19,7 @@ feedback_guide: |
 improvements_guide: |
   ## improvements (최대 3개)
   - 이상 범위를 벗어난 항목만 포함
+  - ideal_range는 반드시 입력 데이터에 제공된 값을 그대로 사용하세요
   - 각 항목:
     - issue: 문제점 (전문 용어 사용 OK)
     - current_value: 측정값

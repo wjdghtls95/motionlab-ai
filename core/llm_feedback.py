@@ -26,7 +26,7 @@ class LLMFeedback:
         self.noop_mode = settings.ENABLE_LLM_NOOP
 
         if not self.noop_mode:
-            self.client = AsyncOpenAI(api_key=settings.openai_api_key)
+            self.client = AsyncOpenAI(api_key=settings.OPENAI_API_KEY)
             self.model = "gpt-4o-mini"
             logger.info(f"✅ LLM 클라이언트 초기화: model={self.model}")
         else:
@@ -57,7 +57,9 @@ class LLMFeedback:
             )
 
         try:
-            messages = self._build_prompt(sport_type, sub_category, angles, phases)
+            messages = self._build_prompt(
+                sport_type, sub_category, angles, phases, sport_config
+            )
 
             logger.info(
                 f"📤 LLM 호출: {sport_type}/{sub_category}, "
@@ -119,16 +121,22 @@ class LLMFeedback:
         sub_category: str,
         angles: Dict[str, float],
         phases: List[Dict[str, Any]],
+        sport_config: Dict[str, Any] = None,
     ) -> Dict[str, str]:
-        """
-        프롬프트 생성 (YAML 기반 + Git 버전 자동).
+        # angles에 ideal_range를 포함시켜서 넘기기
+        angle_configs = sport_config.get("angles", {}) if sport_config else {}
 
-        Before (하드코딩): 200줄의 if-else 지옥 + 수동 버전 관리
-
-        After (YAML + Git): 1줄로 해결 + 자동 버전 관리
-        """
-        # angles를 List[Dict]로 변환 (YAML 프롬프트 호환)
-        angles_list = [{"name": name, "value": value} for name, value in angles.items()]
+        angles_list = []
+        for name, value in angles.items():
+            angle_data = {
+                "name": name,
+                "value": value,
+            }
+            # config에서 ideal_range 가져오기
+            if name in angle_configs:
+                angle_data["ideal_range"] = angle_configs[name].get("ideal_range")
+                angle_data["description"] = angle_configs[name].get("description", "")
+            angles_list.append(angle_data)
 
         return prompt_loader.load(
             sport_type=sport_type,
@@ -144,7 +152,9 @@ class LLMFeedback:
         phases: List[Dict[str, Any]],
         sport_config: Dict[str, Any] = None,
     ) -> Dict[str, Any]:
-        """규칙 기반 피드백 (JSON의 angle_validation 사용)"""
+        """
+        규칙 기반 피드백 (JSON의 angle_validation 사용)
+        """
         if not angles:
             return {
                 "overall_score": 50,
@@ -167,10 +177,7 @@ class LLMFeedback:
             )
 
         validation = sport_config["angle_validation"]
-        min_normal = validation["min_normal"]
-        max_normal = validation["max_normal"]
-        score_good = validation["score_good"]
-        score_warning = validation["score_warning"]
+        angle_feedbacks = sport_config.get("angles", {})
 
         angle_scores = []
         good_points = []
@@ -178,17 +185,45 @@ class LLMFeedback:
 
         # Dict 순회
         for angle_name, angle_value in angles.items():
+            # 해당 각도의 validation 가져오기
+            angle_valid = validation.get(angle_name)
+            if not angle_valid:
+                continue
+
+            min_normal = angle_valid["min_normal"]
+            max_normal = angle_valid["max_normal"]
+
+            # 해당 각도의 feedback 메시지 가져오기
+            angle_config = angle_feedbacks.get(angle_name, {})
+            feedback_msgs = angle_config.get("feedback", {})
+
             if min_normal <= angle_value <= max_normal:
-                angle_scores.append(score_good)
-                good_points.append(f"{angle_name}: {angle_value:.1f}도 (양호)")
+                # ideal_range 안에 있는지도 추가 확인
+                ideal = angle_config.get("ideal_range", [min_normal, max_normal])
+                if ideal[0] <= angle_value <= ideal[1]:
+                    angle_scores.append(90)
+                    msg = feedback_msgs.get("good", f"{angle_name} 양호")
+                    good_points.append(f"{angle_name}: {angle_value:.1f}도 — {msg}")
+                else:
+                    angle_scores.append(70)
+                    msg = feedback_msgs.get("caution", f"{angle_name} 주의")
+                    improvements.append(
+                        {
+                            "issue": f"{angle_name} 주의",
+                            "current_value": angle_value,
+                            "ideal_range": ideal,
+                            "suggestion": msg,
+                        }
+                    )
             else:
-                angle_scores.append(score_warning)
+                angle_scores.append(40)
+                msg = feedback_msgs.get("correction", f"{angle_name} 교정 필요")
                 improvements.append(
                     {
                         "issue": f"{angle_name} 범위 이탈",
                         "current_value": angle_value,
-                        "ideal_range": [min_normal, max_normal],
-                        "suggestion": f"{angle_name}을(를) {min_normal}~{max_normal}도 범위로 조정해주세요",
+                        "valid_range": [min_normal, max_normal],
+                        "suggestion": msg,
                     }
                 )
 
@@ -196,17 +231,20 @@ class LLMFeedback:
 
         feedback_parts = []
         if good_points:
-            feedback_parts.append(f"✅ {good_points[0]}")
+            feedback_parts.append(good_points[0])
         if improvements:
-            feedback_parts.append(f"📌 {improvements[0]['issue']}")
+            feedback_parts.append(improvements[0]["suggestion"])
 
         feedback = (
             " | ".join(feedback_parts)
             if feedback_parts
-            else f"[Noop] {sport_type}/{sub_category} 분석 완료"
+            else f"{sport_type}/{sub_category} 분석 완료"
         )
 
-        logger.info(f"✅ 규칙 기반 피드백: score={overall_score}")
+        logger.info(
+            f"✅ 규칙 기반 피드백: score={overall_score}, "
+            f"good={len(good_points)}, issues={len(improvements)}"
+        )
 
         return {
             "overall_score": overall_score,
@@ -215,7 +253,10 @@ class LLMFeedback:
                 improvements[:3]
                 if improvements
                 else [
-                    {"issue": "전반적으로 양호", "suggestion": "현재 자세를 유지하세요"}
+                    {
+                        "issue": "전반적으로 양호",
+                        "suggestion": "현재 자세를 유지하세요",
+                    }
                 ]
             ),
             "prompt_version": "noop",
