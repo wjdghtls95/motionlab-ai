@@ -1,4 +1,3 @@
-import pytest
 from services.video_service import VideoService
 
 

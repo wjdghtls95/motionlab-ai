@@ -6,7 +6,7 @@ A1~A29 규칙 준수 + Sync/Async 지원
 import functools
 import asyncio
 import time
-from typing import Type, Tuple, Optional, Callable
+from typing import Type, Tuple, Callable
 
 from utils.logger import logger
 from utils.exceptions import AnalyzerError, ErrorCode

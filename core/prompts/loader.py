@@ -162,7 +162,7 @@ class PromptLoader:
             logger.warning(f"⚠️ Git 명령 타임아웃: {file_path.name}")
             return "unknown"
         except FileNotFoundError:
-            logger.warning(f"⚠️ Git 설치 안 됨")
+            logger.warning("⚠️ Git 설치 안 됨")
             return "unknown"
         except Exception as e:
             logger.warning(f"⚠️ Git 해시 추출 실패: {e}")

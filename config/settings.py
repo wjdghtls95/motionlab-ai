@@ -2,7 +2,6 @@
 MotionLab AI - 환경 설정 관리
 .env 파일의 환경 변수를 로드하고 검증
 """
-import os
 from functools import lru_cache
 from pydantic_settings import BaseSettings, SettingsConfigDict
 

@@ -6,7 +6,7 @@
 - 비즈니스 로직은 services/로 위임
 """
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 from models import AnalysisRequest, AnalysisResponse, ErrorResponse
 from models.responses import create_error_response
 from services.analysis_service import AnalysisService

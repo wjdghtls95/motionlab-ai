@@ -12,4 +12,5 @@ __all__ = [
     "PhaseInfo",
     "HealthResponse",
     "ErrorResponse",
+    "create_error_response",
 ]

@@ -111,7 +111,7 @@ class VideoResource:
                     os.remove(self.video_path)
                     logger.info(f"🗑️ 파일 삭제 완료: {self.video_path}")
                     return
-            except Exception as e:
+            except Exception:
                 if attempt < self.max_retries - 1:
                     time.sleep(0.5)
                 else:

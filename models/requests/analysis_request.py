@@ -2,7 +2,7 @@
 분석 요청 모델 (Backend Worker → Analyzer)
 """
 from pydantic import BaseModel, Field
-from typing import Literal, Optional
+from typing import Optional
 
 
 class AnalysisRequest(BaseModel):

@@ -9,7 +9,7 @@
 5. Follow-through (팔로우스루)
 """
 import numpy as np
-from typing import List, Dict, Optional
+from typing import List, Dict
 import logging
 
 logger = logging.getLogger(__name__)
