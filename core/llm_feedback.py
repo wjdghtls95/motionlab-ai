@@ -7,7 +7,7 @@ from typing import Dict, Any, List
 
 from openai import AsyncOpenAI
 
-from config import get_settings
+from config import get_settings, settings
 from core.prompts.loader import prompt_loader
 from utils.logger import logger
 from utils.exceptions import (
@@ -73,8 +73,8 @@ class LLMFeedback:
                     {"role": "user", "content": messages["user"]},
                 ],
                 response_format={"type": "json_object"},
-                temperature=0.7,
-                max_tokens=1000,
+                temperature=settings.LLM_TEMPERATURE,
+                max_tokens=settings.LLM_MAX_TOKENS,
             )
 
             content = response.choices[0].message.content
