@@ -37,7 +37,9 @@ async def analyze_motion(request: AnalysisRequest):
     운동 영상 분석 엔드포인트
     """
     logger.info(
-        f"분석 요청 수신: motion_id={request.motion_id}, sport_type={request.sport_type}"
+        f"분석 요청 수신: motion_id={request.motion_id}, "
+        f"sport_type={request.sport_type}, "
+        f"level={request.level.value}"  # 레벨 로깅
     )
 
     try:
@@ -46,6 +48,7 @@ async def analyze_motion(request: AnalysisRequest):
             video_url=request.video_url,
             sport_type=request.sport_type,
             sub_category=request.sub_category,
+            level=request.level,
         )
 
         logger.info(f"분석 완료: motion_id={request.motion_id}")
