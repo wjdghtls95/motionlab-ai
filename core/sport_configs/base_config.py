@@ -3,7 +3,7 @@ Config 타입 정의 (Type Definitions)
 """
 
 from enum import Enum
-from typing import TypedDict, List, Tuple, Optional, Dict
+from typing import TypedDict, List, Optional, Dict
 
 
 # ========== 사용자 레벨 Enum ==========
