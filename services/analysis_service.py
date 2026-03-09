@@ -134,6 +134,8 @@ class AnalysisService:
                     phases=phases,
                     sport_config=sport_config,
                     level=level,
+                    angle_scores=angles_data.get("angle_scores", {}),
+                    weighted_score=angles_data.get("weighted_score"),
                 )
 
             timer.summary(motion_id)

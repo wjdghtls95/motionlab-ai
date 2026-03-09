@@ -89,3 +89,32 @@ class MotionValidation:
     OUTLIER_MARGIN = 30.0  # angle_validation 범위에서 이만큼 벗어나면 이상치
 
     FALLBACK_PHASE_NAME = "full_motion"  # 폴백 구간 이름 (검증에서 제외)
+
+
+# ========== 레벨별 피드백 톤 ==========
+LEVEL_TONE = {
+    "BEGINNER": {
+        "style": "쉽고 친근하게",
+        "detail": "전문 용어를 피하고 일상 언어로 설명합니다. 비유를 활용하세요.",
+        "encouragement": "작은 성과도 칭찬하며, 한 번에 1~2가지만 개선점으로 제시합니다.",
+        "max_improvements": 2,
+    },
+    "INTERMEDIATE": {
+        "style": "구체적이고 실용적으로",
+        "detail": "기본 전문 용어를 사용하되 간단히 설명을 덧붙입니다.",
+        "encouragement": "강점을 인정하고 다음 단계로 나아갈 방향을 제시합니다.",
+        "max_improvements": 3,
+    },
+    "ADVANCED": {
+        "style": "전문적이고 분석적으로",
+        "detail": "전문 용어를 자유롭게 사용합니다. 세부 수치와 비교 분석을 포함합니다.",
+        "encouragement": "미세 조정 포인트와 경기력 향상 전략을 제시합니다.",
+        "max_improvements": 3,
+    },
+    "PRO": {
+        "style": "데이터 중심의 정밀 분석",
+        "detail": "투어 선수 기준과 비교 분석합니다. 생체역학적 관점에서 설명합니다.",
+        "encouragement": "경쟁력 강화를 위한 최적화 포인트를 제시합니다.",
+        "max_improvements": 3,
+    },
+}

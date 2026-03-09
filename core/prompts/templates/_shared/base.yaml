@@ -29,6 +29,13 @@ improvements_guide: |
     - "~~할 때 ~~에 주의하세요"
     - 구체적 수치 포함 필수
 
+level_guide: |
+  ## 사용자 레벨별 피드백 톤
+  현재 사용자의 레벨에 맞춰 피드백을 작성하세요:
+  - 스타일: {{ level_tone.style }}
+  - 설명 수준: {{ level_tone.detail }}
+  - 격려 방식: {{ level_tone.encouragement }}
+
 json_rules: |
   **절대 지켜야 할 규칙:**
   1. 오직 JSON 텍스트만 출력하세요.
