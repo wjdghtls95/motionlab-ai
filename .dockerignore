@@ -1,0 +1,44 @@
+# Git
+.git
+.gitignore
+
+# Python
+__pycache__
+*.py[cod]
+*.so
+venv/
+env/
+*.egg-info/
+dist/
+build/
+
+# 환경 파일 (절대 이미지에 포함하면 안 됨)
+.env
+.env.local
+.env.test
+
+# 테스트
+tests/
+.pytest_cache/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+.DS_Store
+
+# 임시 파일
+temp_videos/
+*.mp4
+*.avi
+*.mov
+*.log
+
+# Docker
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# docs
+README.md
+docs/

@@ -218,11 +218,17 @@ def client():
         yield c
 
 
+def pytest_sessionfinish(session, exitstatus):
+    """테스트 결과 exit code 저장"""
+    global _pytest_exit_status
+    _pytest_exit_status = exitstatus
+
+
 def pytest_unconfigure(config):
-    """pytest 완전 종료 — 가장 마지막에 실행되는 hook"""
+    """pytest 완전 종료 — 실제 exit code 반환"""
     import os
 
-    os._exit(0)
+    os._exit(_pytest_exit_status)
 
 
 @pytest.fixture
