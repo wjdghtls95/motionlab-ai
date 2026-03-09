@@ -117,6 +117,9 @@ class MotionValidator:
             if not validation:
                 continue
 
+            if angle_value is None:
+                continue
+
             total += 1
             v_min = validation.get("min_normal", AngleDefaults.RANGE_MIN) - margin
             v_max = validation.get("max_normal", AngleDefaults.RANGE_MAX) + margin

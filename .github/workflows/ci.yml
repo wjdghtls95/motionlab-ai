@@ -36,7 +36,7 @@ jobs:
         run: ruff check . --select E,F,W --ignore E501
 
       - name: Test
-        run: pytest tests/ -v --tb=short || true
+        run: pytest tests/ -v --tb=short
         env:
           INTERNAL_API_KEY: test_key
           OPENAI_API_KEY: test_key
