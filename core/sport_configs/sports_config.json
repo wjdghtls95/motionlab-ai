@@ -32,31 +32,19 @@
               },
               "levels": {
                 "PRO": {
-                  "ideal_range": [
-                    165.0,
-                    180.0
-                  ],
+                  "ideal_range": [165.0, 180.0],
                   "weight": 0.17
                 },
                 "ADVANCED": {
-                  "ideal_range": [
-                    163.5,
-                    180.0
-                  ],
+                  "ideal_range": [163.5, 180.0],
                   "weight": 0.17
                 },
                 "INTERMEDIATE": {
-                  "ideal_range": [
-                    161.2,
-                    180.0
-                  ],
+                  "ideal_range": [161.2, 180.0],
                   "weight": 0.17
                 },
                 "BEGINNER": {
-                  "ideal_range": [
-                    157.5,
-                    180.0
-                  ],
+                  "ideal_range": [157.5, 180.0],
                   "weight": 0.17
                 }
               }
@@ -81,31 +69,19 @@
               },
               "levels": {
                 "PRO": {
-                  "ideal_range": [
-                    75.0,
-                    105.0
-                  ],
+                  "ideal_range": [75.0, 105.0],
                   "weight": 0.17
                 },
                 "ADVANCED": {
-                  "ideal_range": [
-                    72.0,
-                    108.0
-                  ],
+                  "ideal_range": [72.0, 108.0],
                   "weight": 0.17
                 },
                 "INTERMEDIATE": {
-                  "ideal_range": [
-                    67.5,
-                    112.5
-                  ],
+                  "ideal_range": [67.5, 112.5],
                   "weight": 0.17
                 },
                 "BEGINNER": {
-                  "ideal_range": [
-                    60.0,
-                    120.0
-                  ],
+                  "ideal_range": [60.0, 120.0],
                   "weight": 0.17
                 }
               }
@@ -130,31 +106,19 @@
               },
               "levels": {
                 "PRO": {
-                  "ideal_range": [
-                    143.3,
-                    160.1
-                  ],
+                  "ideal_range": [143.3, 160.1],
                   "weight": 0.17
                 },
                 "ADVANCED": {
-                  "ideal_range": [
-                    141.6,
-                    161.8
-                  ],
+                  "ideal_range": [141.6, 161.8],
                   "weight": 0.17
                 },
                 "INTERMEDIATE": {
-                  "ideal_range": [
-                    139.1,
-                    164.3
-                  ],
+                  "ideal_range": [139.1, 164.3],
                   "weight": 0.17
                 },
                 "BEGINNER": {
-                  "ideal_range": [
-                    134.9,
-                    168.5
-                  ],
+                  "ideal_range": [134.9, 168.5],
                   "weight": 0.17
                 }
               }
@@ -175,31 +139,19 @@
               },
               "levels": {
                 "PRO": {
-                  "ideal_range": [
-                    50.0,
-                    62.0
-                  ],
+                  "ideal_range": [50.0, 62.0],
                   "weight": 0.16
                 },
                 "ADVANCED": {
-                  "ideal_range": [
-                    48.8,
-                    63.2
-                  ],
+                  "ideal_range": [48.8, 63.2],
                   "weight": 0.16
                 },
                 "INTERMEDIATE": {
-                  "ideal_range": [
-                    47.0,
-                    65.0
-                  ],
+                  "ideal_range": [47.0, 65.0],
                   "weight": 0.16
                 },
                 "BEGINNER": {
-                  "ideal_range": [
-                    44.0,
-                    68.0
-                  ],
+                  "ideal_range": [44.0, 68.0],
                   "weight": 0.16
                 }
               }
@@ -224,31 +176,19 @@
               },
               "levels": {
                 "PRO": {
-                  "ideal_range": [
-                    120.0,
-                    149.8
-                  ],
+                  "ideal_range": [120.0, 149.8],
                   "weight": 0.17
                 },
                 "ADVANCED": {
-                  "ideal_range": [
-                    120.0,
-                    152.8
-                  ],
+                  "ideal_range": [120.0, 152.8],
                   "weight": 0.17
                 },
                 "INTERMEDIATE": {
-                  "ideal_range": [
-                    120.0,
-                    157.3
-                  ],
+                  "ideal_range": [120.0, 157.3],
                   "weight": 0.17
                 },
                 "BEGINNER": {
-                  "ideal_range": [
-                    120.0,
-                    164.8
-                  ],
+                  "ideal_range": [120.0, 164.8],
                   "weight": 0.17
                 }
               }
@@ -273,39 +213,83 @@
               },
               "levels": {
                 "PRO": {
-                  "ideal_range": [
-                    134.7,
-                    172.2
-                  ],
+                  "ideal_range": [134.7, 172.2],
                   "weight": 0.16
                 },
                 "ADVANCED": {
-                  "ideal_range": [
-                    130.9,
-                    175.9
-                  ],
+                  "ideal_range": [130.9, 175.9],
                   "weight": 0.16
                 },
                 "INTERMEDIATE": {
-                  "ideal_range": [
-                    125.3,
-                    180.0
-                  ],
+                  "ideal_range": [125.3, 180.0],
                   "weight": 0.16
                 },
                 "BEGINNER": {
-                  "ideal_range": [
-                    125.0,
-                    180.0
-                  ],
+                  "ideal_range": [125.0, 180.0],
                   "weight": 0.16
                 }
               }
             }
           },
-          "phases": []
+          "phases": [
+            {
+              "name": "address",
+              "detection_rule": "stabilization",
+              "target_angle": "left_arm_angle",
+              "params": {
+                "window": 5,
+                "std_threshold": 2.0,
+                "position": "start"
+              }
+            },
+            {
+              "name": "backswing",
+              "detection_rule": "angle_decrease",
+              "target_angle": "left_arm_angle",
+              "params": {
+                "window": 5,
+                "min_change": 5.0
+              }
+            },
+            {
+              "name": "backswing_top",
+              "detection_rule": "angle_min",
+              "target_angle": "left_arm_angle",
+              "params": {
+                "search_after": "backswing"
+              }
+            },
+            {
+              "name": "downswing",
+              "detection_rule": "angle_increase",
+              "target_angle": "left_arm_angle",
+              "params": {
+                "window": 5,
+                "min_change": 5.0,
+                "search_after": "backswing_top"
+              }
+            },
+            {
+              "name": "impact",
+              "detection_rule": "angle_max",
+              "target_angle": "left_arm_angle",
+              "params": {
+                "search_after": "backswing_top"
+              }
+            },
+            {
+              "name": "follow_through",
+              "detection_rule": "stabilization",
+              "target_angle": "left_arm_angle",
+              "params": {
+                "window": 10,
+                "std_threshold": 3.0,
+                "position": "end"
+              }
+            }
+          ]
         }
       }
     }
-  },
+  }
 }

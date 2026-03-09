@@ -1,8 +1,7 @@
 """
 MotionLab AI - 전역 상수 정의
 
-분석 파이프라인에서 사용하는 점수, 임계값, 기본값 등을 한 곳에서 관리.
-매직 넘버를 없애고, 수정 시 이 파일만 변경하면 됨.
+분석 파이프라인에서 사용하는 점수, 임계값, 기본값 등을 한 곳에서 관리
 """
 
 
@@ -29,7 +28,7 @@ class FeedbackThreshold:
 class PipelineConfig:
     """분석 파이프라인 설정"""
 
-    TOTAL_STEPS = 7  # 파이프라인 전체 단계 수
+    TOTAL_STEPS = 8  # 파이프라인 전체 단계 수
     MIN_VISIBILITY = 0.5  # MediaPipe 랜드마크 최소 신뢰도
     MIN_VALID_FRAME_RATIO = 0.1  # 최소 유효 프레임 비율 (10%)
     MIN_VIDEO_DURATION = 1.0  # 최소 영상 길이 (초)
@@ -51,3 +50,42 @@ class AngleDefaults:
     RANGE_MIN = 0  # ideal_range fallback 최소
     RANGE_MAX = 360  # ideal_range fallback 최대
     DEFAULT_WEIGHT = 1.0  # 가중치 기본값
+
+
+# ========== 구간 감지 ==========
+class PhaseDetection:
+    """구간 감지 관련 상수 — 종목 독립적"""
+
+    # 감지 규칙 이름
+    RULE_STABILIZATION = "stabilization"
+    RULE_ANGLE_INCREASE = "angle_increase"
+    RULE_ANGLE_DECREASE = "angle_decrease"
+    RULE_ANGLE_MAX = "angle_max"
+    RULE_ANGLE_MIN = "angle_min"
+    RULE_VELOCITY_THRESHOLD = "velocity_threshold"
+
+    # 기본 파라미터
+    DEFAULT_WINDOW = 5
+    DEFAULT_THRESHOLD = 5.0
+    DEFAULT_STD_THRESHOLD = 2.0
+
+    # 프레임 제한
+    MIN_PHASE_FRAMES = 3
+    MIN_FRAMES_FOR_DETECTION = 10
+
+
+# ========== 종목 일치 검증 ==========
+class MotionValidation:
+    """영상-종목 일치 검증 상수"""
+
+    # 각도 검증
+    MIN_VALID_ANGLES_RATIO = 0.5  # 전체 각도 중 50% 이상이 정상 범위 안에 있어야 함
+    MIN_ANGLES_IN_RANGE = 3  # 최소 3개 각도가 validation 범위 안에 있어야 함
+
+    # Phase 검증
+    MIN_PHASES_REQUIRED = 2  # 최소 2개 이상 구간이 감지되어야 함
+
+    # 각도 이상치 판정
+    OUTLIER_MARGIN = 30.0  # angle_validation 범위에서 이만큼 벗어나면 이상치
+
+    FALLBACK_PHASE_NAME = "full_motion"  # 폴백 구간 이름 (검증에서 제외)
