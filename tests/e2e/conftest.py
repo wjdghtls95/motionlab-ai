@@ -218,6 +218,10 @@ def client():
         yield c
 
 
+# pytest hook: CI exit code 정확히 반환
+_pytest_exit_status = 0
+
+
 def pytest_sessionfinish(session, exitstatus):
     """테스트 결과 exit code 저장"""
     global _pytest_exit_status
