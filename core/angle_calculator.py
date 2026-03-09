@@ -101,7 +101,12 @@ class AngleCalculator:
             f"각도 계산 완료: {len(frame_angles_list)}/{len(frames)} 프레임 성공"
         )
 
-        return {"frame_angles": frame_angles_list, "average_angles": average_angles}
+        return {
+            "frame_angles": frame_angles_list,
+            "average_angles": average_angles,
+            "angle_scores": angle_scores,
+            "weighted_score": weighted_score,
+        }
 
     def _calculate_scores(self, average_angles: Dict[str, float]) -> Dict[str, int]:
         """
