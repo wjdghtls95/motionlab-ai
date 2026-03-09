@@ -1,258 +1,312 @@
 """
-구간 감지 (Phase Detection)
+Config 기반 구간 감지기 (PhaseDetector)
 
-골프 스윙을 5가지 구간으로 자동 분류:
-1. Address (준비)
-2. Backswing (백스윙)
-3. Top (정점)
-4. Downswing (다운스윙)
-5. Follow-through (팔로우스루)
+sports_config.json의 phases 배열을 읽어 자동으로 구간을 감지.
+코드에 특정 종목 이름이나 각도 이름 없음 — config가 모든 것을 결정.
+
+감지 흐름:
+  1. phases config 로드
+  2. 각 phase의 detection_rule에 맞는 핸들러 실행
+  3. 감지된 keyframe들을 시간순 정렬 → 구간 변환
+  4. config가 없으면 full_motion 단일 구간 폴백
 """
-import numpy as np
-from typing import List, Dict
+
 import logging
+import numpy as np
+from typing import Dict, List, Any, Optional
+
+from core.constants import PhaseDetection, MotionValidation
 
 logger = logging.getLogger(__name__)
 
 
 class PhaseDetector:
-    """
-    골프 스윙 구간 감지
+    """Config 기반 구간 감지 — 종목 독립적"""
 
-    알고리즘:ㅇ
-    1. 왼팔 각도 변화율 기반 구간 탐지
-    2. 척추 각도 보조 지표
-    3. GolfDB 규칙 적용
-    """
-
-    def __init__(self, phase_config: List[Dict], fps: float = 24.0):
+    def __init__(self, phase_config: List[Dict[str, Any]], fps: int = 24):
         """
-        Args:
-            fps: 영상 프레임레이트 (기본 24fps)
+        Parameters
+        ----------
+        phase_config : sports_config.json에서 읽어온 phases 리스트
+        fps : 영상 프레임 레이트
         """
-        self.phase_config = phase_config
+        self.phase_config = phase_config or []
         self.fps = fps
 
-    def detect_phases(self, angles_data: Dict) -> List[Dict]:
+        self._rule_handlers = {
+            PhaseDetection.RULE_STABILIZATION: self._detect_stabilization,
+            PhaseDetection.RULE_ANGLE_INCREASE: self._detect_angle_increase,
+            PhaseDetection.RULE_ANGLE_DECREASE: self._detect_angle_decrease,
+            PhaseDetection.RULE_ANGLE_MAX: self._detect_angle_max,
+            PhaseDetection.RULE_ANGLE_MIN: self._detect_angle_min,
+            PhaseDetection.RULE_VELOCITY_THRESHOLD: self._detect_velocity_threshold,
+        }
+
+    # ──────────────────────────────────────
+    # Public
+    # ──────────────────────────────────────
+
+    def detect_phases(self, angles_data: Dict[str, Any]) -> List[Dict[str, Any]]:
         """
-        구간 감지 메인 함수
+        구간 감지 실행
 
-        Args:
-            angles_data: AngleCalculator 출력
-                {
-                    "frame_angles": [
-                        {"frame_index": 0, "angles": {...}},
-                        ...
-                    ],
-                    "average_angles": {...}
-                }
+        Parameters
+        ----------
+        angles_data : AngleCalculator가 반환한 프레임별 각도 데이터
+                      {"angle_name": {"frames": {0: val, 1: val, ...}, "average": float}, ...}
 
-        Returns:
-            [
-                {
-                    "name": "backswing",
-                    "start_frame": 21,
-                    "end_frame": 60,
-                    "duration_ms": 1625
-                },
-                ...
-            ]
+        Returns
+        -------
+        [{"name": str, "start_frame": int, "end_frame": int, "duration_ms": int}, ...]
         """
-        frame_angles = angles_data["frame_angles"]
+        if not self.phase_config:
+            logger.warning("phase_config 비어있음 → 폴백 구간 반환")
+            return self._build_fallback(angles_data)
 
-        if not frame_angles:
-            logger.warning("프레임 각도 데이터 없음")
-            return []
+        total_frames = self._get_total_frames(angles_data)
 
-        # 왼팔 각도 추출
-        left_arm_angles = self._extract_angle_series(frame_angles, "left_arm_angle")
+        if total_frames < PhaseDetection.MIN_FRAMES_FOR_DETECTION:
+            logger.warning(f"프레임 수 부족 ({total_frames}) → 폴백 구간 반환")
+            return self._build_fallback(angles_data)
 
-        if not left_arm_angles:
-            logger.warning("왼팔 각도 데이터 없음")
-            return []
+        # 각 phase config의 규칙을 실행해서 keyframe(시작 프레임) 수집
+        keyframes: List[Dict[str, Any]] = []
+        detected_keyframes: Dict[str, int] = {}  # name → frame (search_after 참조용)
 
-        # 구간 경계점 탐지
-        address_end = self._detect_address_end(left_arm_angles)
-        top_frame = self._detect_top(left_arm_angles, address_end)
-        impact_frame = self._detect_impact(left_arm_angles, top_frame)
-        finish_frame = self._detect_finish(left_arm_angles, impact_frame)
+        for phase_def in self.phase_config:
+            name = phase_def.get("name", "unknown")
+            rule = phase_def.get("detection_rule", "")
+            target_angle = phase_def.get("target_angle")
+            params = phase_def.get("params", {})
 
-        # 구간 생성
-        phases = self._create_phases(
-            address_end,
-            top_frame,
-            impact_frame,
-            finish_frame,
-            len(left_arm_angles)
+            # 핸들러 찾기
+            handler = self._rule_handlers.get(rule)
+            if handler is None:
+                logger.warning(f"알 수 없는 규칙 '{rule}' → '{name}' 구간 건너뜀")
+                continue
+
+            # target_angle 데이터 추출
+            if target_angle is None:
+                logger.warning(f"'{name}' 구간에 target_angle 없음 → 건너뜀")
+                continue
+
+            angle_series = self._extract_angle_series(angles_data, target_angle)
+            if angle_series is None:
+                logger.warning(
+                    f"'{target_angle}' 각도 데이터 없음 → '{name}' 구간 건너뜀"
+                )
+                continue
+
+            # search_after 처리: 특정 구간 이후부터만 탐색
+            search_start = self._resolve_search_start(params, detected_keyframes)
+
+            # 규칙 실행
+            frame = handler(angle_series, params, search_start, total_frames)
+
+            if frame is not None:
+                keyframes.append({"name": name, "frame": frame})
+                detected_keyframes[name] = frame
+                logger.debug(f"구간 '{name}' 감지 → frame {frame}")
+            else:
+                logger.info(f"구간 '{name}' 감지 실패")
+
+        # keyframe → phase 변환
+        if not keyframes:
+            logger.warning("감지된 구간 없음 → 폴백 구간 반환")
+            return self._build_fallback(angles_data)
+
+        return self._keyframes_to_phases(keyframes, total_frames)
+
+    # ──────────────────────────────────────
+    # 감지 규칙 핸들러
+    # ──────────────────────────────────────
+
+    def _detect_stabilization(
+        self, series: np.ndarray, params: dict, search_start: int, total_frames: int
+    ) -> Optional[int]:
+        """안정 구간 감지: 이동 윈도우 내 std가 threshold 이하인 구간"""
+        window = params.get("window", PhaseDetection.DEFAULT_WINDOW)
+        std_threshold = params.get(
+            "std_threshold", PhaseDetection.DEFAULT_STD_THRESHOLD
         )
+        position = params.get("position", "start")  # "start" 또는 "end"
 
-        logger.info(f"✅ {len(phases)}개 구간 감지 완료")
-        return phases
+        if position == "end":
+            # 끝에서부터 역순 탐색
+            for i in range(len(series) - window, search_start, -1):
+                if i < 0:
+                    break
+                segment = series[i : i + window]
+                if np.std(segment) <= std_threshold:
+                    return i
+        else:
+            # 앞에서부터 순방향 탐색
+            for i in range(search_start, len(series) - window + 1):
+                segment = series[i : i + window]
+                if np.std(segment) > std_threshold:
+                    return max(i - 1, 0)
+
+        return None
+
+    def _detect_angle_increase(
+        self, series: np.ndarray, params: dict, search_start: int, total_frames: int
+    ) -> Optional[int]:
+        """각도 증가 시작점 감지"""
+        window = params.get("window", PhaseDetection.DEFAULT_WINDOW)
+        min_change = params.get("min_change", PhaseDetection.DEFAULT_THRESHOLD)
+
+        for i in range(search_start, len(series) - window):
+            diff = series[i + window] - series[i]
+            if diff >= min_change:
+                return i
+
+        return None
+
+    def _detect_angle_decrease(
+        self, series: np.ndarray, params: dict, search_start: int, total_frames: int
+    ) -> Optional[int]:
+        """각도 감소 시작점 감지"""
+        window = params.get("window", PhaseDetection.DEFAULT_WINDOW)
+        min_change = params.get("min_change", PhaseDetection.DEFAULT_THRESHOLD)
+
+        for i in range(search_start, len(series) - window):
+            diff = series[i] - series[i + window]
+            if diff >= min_change:
+                return i
+
+        return None
+
+    def _detect_angle_max(
+        self, series: np.ndarray, params: dict, search_start: int, total_frames: int
+    ) -> Optional[int]:
+        """search_start 이후 최대 각도 프레임"""
+        if search_start >= len(series):
+            return None
+        sub = series[search_start:]
+        return int(search_start + np.argmax(sub))
+
+    def _detect_angle_min(
+        self, series: np.ndarray, params: dict, search_start: int, total_frames: int
+    ) -> Optional[int]:
+        """search_start 이후 최소 각도 프레임"""
+        if search_start >= len(series):
+            return None
+        sub = series[search_start:]
+        return int(search_start + np.argmin(sub))
+
+    def _detect_velocity_threshold(
+        self, series: np.ndarray, params: dict, search_start: int, total_frames: int
+    ) -> Optional[int]:
+        """각도 변화 속도(velocity)가 threshold를 넘는 시점"""
+        threshold = params.get("threshold", PhaseDetection.DEFAULT_THRESHOLD)
+        direction = params.get("direction", "any")  # "positive", "negative", "any"
+
+        velocity = np.diff(series)
+
+        for i in range(search_start, len(velocity)):
+            v = velocity[i]
+            if direction == "positive" and v >= threshold:
+                return i
+            elif direction == "negative" and v <= -threshold:
+                return i
+            elif direction == "any" and abs(v) >= threshold:
+                return i
+
+        return None
+
+    # ──────────────────────────────────────
+    # 유틸리티
+    # ──────────────────────────────────────
 
     def _extract_angle_series(
-            self,
-            frame_angles: List[Dict],
-            angle_name: str
-    ) -> List[float]:
-        """
-        특정 각도의 시계열 데이터 추출
+        self, angles_data: Dict[str, Any], target_angle: str
+    ) -> Optional[np.ndarray]:
+        """angles_data에서 특정 각도의 프레임별 값을 numpy 배열로 추출"""
+        angle_data = angles_data.get(target_angle)
+        if angle_data is None:
+            return None
 
-        Args:
-            frame_angles: 프레임별 각도 리스트
-            angle_name: 각도 이름 (예: "left_arm_angle")
+        frames = angle_data.get("frames", {})
+        if not frames:
+            return None
 
-        Returns:
-            [165.2, 168.1, 170.3, ...]
-        """
-        angles = []
-        for frame_data in frame_angles:
-            angle_value = frame_data["angles"].get(angle_name)
-            if angle_value is not None:
-                angles.append(angle_value)
-            else:
-                # 이전 값으로 보간 (간단한 방법)
-                if angles:
-                    angles.append(angles[-1])
-                else:
-                    angles.append(0.0)
+        max_frame = max(frames.keys())
+        series = np.zeros(max_frame + 1)
 
-        return angles
+        for frame_idx, value in frames.items():
+            series[frame_idx] = value
 
-    def _detect_address_end(self, left_arm_angles: List[float]) -> int:
-        """
-        Address 구간 종료 지점 (스윙 시작)
+        # 0인 프레임 보간 (간단한 선형 보간)
+        nonzero = np.nonzero(series)[0]
+        if len(nonzero) > 1:
+            series = np.interp(np.arange(len(series)), nonzero, series[nonzero])
 
-        기준: 왼팔 각도가 5도 이상 증가한 첫 프레임
-        """
-        window_size = 5  # 5프레임 이동 평균
-        threshold = 5.0  # 5도 이상 변화
+        return series
 
-        for i in range(window_size, len(left_arm_angles) - window_size):
-            prev_avg = np.mean(left_arm_angles[i - window_size:i])
-            curr_avg = np.mean(left_arm_angles[i:i + window_size])
+    def _resolve_search_start(
+        self, params: dict, detected_keyframes: Dict[str, int]
+    ) -> int:
+        """search_after 파라미터가 있으면 해당 구간의 프레임 이후부터 탐색"""
+        search_after = params.get("search_after")
+        if search_after and search_after in detected_keyframes:
+            return detected_keyframes[search_after] + 1
+        return 0
 
-            if curr_avg - prev_avg > threshold:
-                logger.info(f"Address 종료: 프레임 {i}")
-                return i
+    def _get_total_frames(self, angles_data: Dict[str, Any]) -> int:
+        """angles_data에서 전체 프레임 수 추출"""
+        max_frame = 0
+        for angle_data in angles_data.values():
+            frames = angle_data.get("frames", {})
+            if frames:
+                max_frame = max(max_frame, max(frames.keys()))
+        return max_frame + 1
 
-        # 감지 실패 시 첫 10% 지점
-        return int(len(left_arm_angles) * 0.1)
+    def _build_fallback(self, angles_data: Dict[str, Any]) -> List[Dict[str, Any]]:
+        """폴백: 전체 영상을 하나의 구간으로"""
+        total_frames = self._get_total_frames(angles_data)
+        end_frame = max(total_frames - 1, 0)
 
-    def _detect_top(self, left_arm_angles: List[float], start_frame: int) -> int:
-        """
-        Top (정점) 감지
-
-        기준: 왼팔 각도 최대값
-        """
-        # Address 이후 구간에서 최대값 찾기
-        search_range = left_arm_angles[start_frame:]
-
-        if not search_range:
-            return start_frame
-
-        max_idx = np.argmax(search_range)
-        top_frame = start_frame + max_idx
-
-        logger.info(f"Top 감지: 프레임 {top_frame} (각도: {left_arm_angles[top_frame]:.1f}°)")
-        return top_frame
-
-    def _detect_impact(self, left_arm_angles: List[float], top_frame: int) -> int:
-        """
-        Impact (임팩트) 감지
-
-        기준: Top 이후 왼팔 각도가 최소값에 도달
-        """
-        # Top 이후 구간에서 최소값 찾기
-        search_range = left_arm_angles[top_frame:]
-
-        if not search_range:
-            return top_frame
-
-        min_idx = np.argmin(search_range)
-        impact_frame = top_frame + min_idx
-
-        logger.info(f"Impact 감지: 프레임 {impact_frame} (각도: {left_arm_angles[impact_frame]:.1f}°)")
-        return impact_frame
-
-    def _detect_finish(self, left_arm_angles: List[float], impact_frame: int) -> int:
-        """
-        Finish (팔로우스루 종료) 감지
-
-        기준: Impact 이후 각도 변화율이 안정화
-        """
-        window_size = 10
-        threshold = 2.0  # 2도 이내 변화
-
-        for i in range(impact_frame + window_size, len(left_arm_angles) - window_size):
-            angle_variance = np.std(left_arm_angles[i:i + window_size])
-
-            if angle_variance < threshold:
-                logger.info(f"Finish 감지: 프레임 {i}")
-                return i
-
-        # 감지 실패 시 마지막 프레임
-        return len(left_arm_angles) - 1
-
-    def _create_phases(
-            self,
-            address_end: int,
-            top_frame: int,
-            impact_frame: int,
-            finish_frame: int,
-            total_frames: int
-    ) -> List[Dict]:
-        """
-        구간 정보 생성
-
-        Returns:
-            [
-                {"name": "address", "start_frame": 0, "end_frame": 21, "duration_ms": 875},
-                ...
-            ]
-        """
-        phases = [
+        return [
             {
-                "name": "address",
+                "name": MotionValidation.FALLBACK_PHASE_NAME,
                 "start_frame": 0,
-                "end_frame": address_end,
-                "duration_ms": self._frame_to_ms(address_end)
-            },
-            {
-                "name": "backswing",
-                "start_frame": address_end,
-                "end_frame": top_frame,
-                "duration_ms": self._frame_to_ms(top_frame - address_end)
-            },
-            {
-                "name": "top",
-                "start_frame": top_frame - 2,  # Top 전후 2프레임
-                "end_frame": top_frame + 2,
-                "duration_ms": self._frame_to_ms(4)
-            },
-            {
-                "name": "downswing",
-                "start_frame": top_frame,
-                "end_frame": impact_frame,
-                "duration_ms": self._frame_to_ms(impact_frame - top_frame)
-            },
-            {
-                "name": "follow_through",
-                "start_frame": impact_frame,
-                "end_frame": finish_frame,
-                "duration_ms": self._frame_to_ms(finish_frame - impact_frame)
+                "end_frame": end_frame,
+                "duration_ms": self._frame_to_ms(end_frame),
             }
         ]
 
+    def _keyframes_to_phases(
+        self, keyframes: List[Dict[str, Any]], total_frames: int
+    ) -> List[Dict[str, Any]]:
+        """감지된 keyframe 리스트를 연속 구간으로 변환"""
+        # 프레임 순서로 정렬
+        sorted_kf = sorted(keyframes, key=lambda x: x["frame"])
+
+        phases = []
+        for i, kf in enumerate(sorted_kf):
+            start = kf["frame"]
+            if i + 1 < len(sorted_kf):
+                end = sorted_kf[i + 1]["frame"] - 1
+            else:
+                end = total_frames - 1
+
+            # 최소 프레임 수 보장
+            if end - start < PhaseDetection.MIN_PHASE_FRAMES:
+                end = min(start + PhaseDetection.MIN_PHASE_FRAMES, total_frames - 1)
+
+            phases.append(
+                {
+                    "name": kf["name"],
+                    "start_frame": start,
+                    "end_frame": end,
+                    "duration_ms": self._frame_to_ms(end - start),
+                }
+            )
+
         return phases
 
-    def _frame_to_ms(self, frames: int) -> int:
-        """
-        프레임 수 → 밀리초 변환
-
-        Args:
-            frames: 프레임 수
-
-        Returns:
-            밀리초
-        """
-        return int((frames / self.fps) * 1000)
+    def _frame_to_ms(self, frame_count: int) -> int:
+        """프레임 수를 밀리초로 변환"""
+        if self.fps <= 0:
+            return 0
+        return int((frame_count / self.fps) * 1000)

@@ -14,9 +14,21 @@ class StepTimer:
         self.durations: dict[str, float] = {}
         self.total_start: float = 0
         self._step_count: int = 0
+        self._current_step = 0
 
     def start_total(self):
         self.total_start = time.time()
+
+    def next_step(self, total_steps: int, description: str):
+        """
+        자동 증가 step — 번호를 직접 쓰지 않아도 됨
+
+        Usage:
+            with timer.next_step(TOTAL_STEPS, "영상 다운로드"):
+                ...
+        """
+        self._current_step += 1
+        return self.step(self._current_step, total_steps, description)
 
     def summary(self, motion_id: int) -> float:
         """전체 성능 요약 로그"""
