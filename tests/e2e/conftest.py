@@ -1,5 +1,11 @@
+# ruff: noqa: E402
 """
 E2E 테스트 설정 — 환경변수 오버라이딩 + 파이프라인 Mock
+
+⚠️ E402 (import not at top) 억제 이유:
+   os.environ 설정 → get_settings.cache_clear() → app import
+   이 순서가 반드시 지켜져야 settings가 테스트용 환경변수를 읽음.
+   순서가 바뀌면 INTERNAL_API_KEY가 실제 값으로 캐시되어 401 에러 발생.
 """
 
 import os
