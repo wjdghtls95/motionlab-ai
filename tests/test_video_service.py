@@ -35,45 +35,41 @@ def test_metadata_extraction_mocked(video_service):
     assert metadata["width"] == 1920
     assert metadata["height"] == 1080
     assert metadata["fps"] == 30.0
-    assert metadata["duration_seconds"] == 5.0  # 150 frames / 30 fps
+    assert metadata["duration_seconds"] == 5.0
 
 
 # 3. VideoService 인스턴스 정상 생성
 def test_video_service_init(video_service):
-    """VideoService가 정상적으로 생성되는지"""
     assert video_service is not None
 
 
-# 4. fps가 0인 영상 → duration 계산 시 ZeroDivision 방지
+# 4. fps가 0인 영상
 def test_metadata_zero_fps(video_service):
-    """fps=0인 영상 → 에러 또는 안전한 기본값"""
     mock_cap = MagicMock()
     mock_cap.isOpened.return_value = True
     mock_cap.get.side_effect = lambda prop: {
         3: 1920.0,
         4: 1080.0,
-        5: 0.0,  # fps = 0
+        5: 0.0,
         7: 150.0,
     }.get(prop, 0.0)
 
     with patch("services.video_service.cv2.VideoCapture", return_value=mock_cap):
         metadata = video_service.extract_metadata("/fake/video.mp4")
 
-    # fps=0이면 duration 계산 불가 → 0 또는 에러 처리 확인
     assert metadata["fps"] == 0.0
     assert metadata["duration_seconds"] >= 0
 
 
 # 5. 빈 영상 (frame_count = 0)
 def test_metadata_empty_video(video_service):
-    """프레임이 0개인 영상"""
     mock_cap = MagicMock()
     mock_cap.isOpened.return_value = True
     mock_cap.get.side_effect = lambda prop: {
         3: 0.0,
         4: 0.0,
         5: 30.0,
-        7: 0.0,  # frame_count = 0
+        7: 0.0,
     }.get(prop, 0.0)
 
     with patch("services.video_service.cv2.VideoCapture", return_value=mock_cap):

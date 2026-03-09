@@ -21,6 +21,7 @@ import numpy as np
 import logging
 from typing import Dict, List, Optional, Any, Callable
 
+from core.constants import FeedbackScore, AngleDefaults
 from core.landmarks import get_landmark_index
 
 logger = logging.getLogger(__name__)
@@ -52,25 +53,26 @@ class AngleCalculator:
 
     def calculate_angles(self, landmarks_data: Dict) -> Dict:
         """
-        전체 프레임 각도 계산 + 평균 각도 반환
-
-        Args:
-            landmarks_data: mediapipe_analyzer에서 반환된 데이터
-                { "frames": [ { "frame_idx": 0, "landmarks": [...] }, ... ] }
+        전체 프레임 각도 계산 + 평균 각도 + 점수 반환
 
         Returns:
-            {
-                "frame_angles": [
-                    { "frame_idx": 0, "angles": { "left_arm_angle": 165.3, ... } },
-                    ...
-                ],
-                "average_angles": { "left_arm_angle": 168.7, ... }
-            }
+        {
+            "frame_angles": [...],
+            "average_angles": {"left_arm_angle": 168.7, ...},
+            "angle_scores": {"left_arm_angle": 90, ...},
+            "weighted_score": 73.5
+        }
         """
         frames = landmarks_data.get("frames", [])
         if not frames:
             logger.warning("프레임 데이터 없음")
-            return {"frame_angles": [], "average_angles": {}}
+
+            return {
+                "frame_angles": [],
+                "average_angles": {},
+                "angle_scores": {},
+                "weighted_score": FeedbackScore.DEFAULT,
+            }
 
         frame_angles_list = []
         # 각도별 값 수집 (평균 계산용)
@@ -92,14 +94,83 @@ class AngleCalculator:
             if values:
                 average_angles[name] = round(float(np.mean(values)), 1)
 
+        angle_scores = self._calculate_scores(average_angles)
+        weighted_score = self._calculate_weighted_score(angle_scores)
+
         logger.info(
             f"각도 계산 완료: {len(frame_angles_list)}/{len(frames)} 프레임 성공"
         )
 
         return {"frame_angles": frame_angles_list, "average_angles": average_angles}
 
-    # ========== 프레임 단위 계산 ==========
+    def _calculate_scores(self, average_angles: Dict[str, float]) -> Dict[str, int]:
+        """
+        각 각도의 평균값이 ideal_range 안에 있는지 판단해서 점수 부여
 
+        - ideal_range 안 → IDEAL (90점)
+        - angle_validation 안 → CAUTION (70점)
+        - 둘 다 밖 → CORRECTION (40점)
+        - 데이터 없음 → NO_DATA (50점)
+        """
+        scores = {}
+
+        for angle_name, angle_def in self.angle_config.items():
+            value = average_angles.get(angle_name)
+
+            if value is None:
+                scores[angle_name] = FeedbackScore.NO_DATA
+                continue
+
+            ideal = angle_def.get(
+                "ideal_range", [AngleDefaults.RANGE_MIN, AngleDefaults.RANGE_MAX]
+            )
+
+            # ideal_range 안이면 최고 점수
+            if ideal[0] <= value <= ideal[1]:
+                scores[angle_name] = FeedbackScore.IDEAL
+                continue
+
+            # angle_validation (정상 범위) 안이면 주의
+            validation = angle_def.get("angle_validation")
+            if validation:
+                v_min = validation.get("min_normal", AngleDefaults.RANGE_MIN)
+                v_max = validation.get("max_normal", AngleDefaults.RANGE_MAX)
+                if v_min <= value <= v_max:
+                    scores[angle_name] = FeedbackScore.CAUTION
+                    continue
+
+            # 둘 다 밖이면 교정
+            scores[angle_name] = FeedbackScore.CORRECTION
+
+        return scores
+
+    def _calculate_weighted_score(self, angle_scores: Dict[str, int]) -> float:
+        """
+        가중 평균 점수 계산 — weight 자동 정규화
+
+        config의 weight가 뭐든 합이 1.0이 되도록 자동 조정.
+        weight가 없으면 균등 배분.
+        """
+        if not angle_scores:
+            return float(FeedbackScore.DEFAULT)
+
+        total_weight = 0.0
+        weighted_sum = 0.0
+
+        for angle_name, score in angle_scores.items():
+            angle_def = self.angle_config.get(angle_name, {})
+            weight = angle_def.get("weight", AngleDefaults.DEFAULT_WEIGHT)
+            total_weight += weight
+            weighted_sum += score * weight
+
+        if total_weight <= 0:
+            return float(FeedbackScore.DEFAULT)
+
+        # 자동 정규화: total_weight로 나눔
+        result = weighted_sum / total_weight
+        return round(result, 1)
+
+    # ========== 프레임 단위 계산 ==========
     def _calculate_frame_angles(
         self, landmarks: List[Dict]
     ) -> Optional[Dict[str, float]]:
