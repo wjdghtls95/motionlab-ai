@@ -1,6 +1,3 @@
-# ============================================================
-# tests/e2e/conftest.py
-# ============================================================
 """
 E2E 테스트 설정 — 환경변수 오버라이딩 + 파이프라인 Mock
 """
@@ -13,19 +10,19 @@ os.environ["ENABLE_LLM_NOOP"] = "true"
 os.environ["OPENAI_API_KEY"] = "not_used_in_noop"
 
 # ── 2) settings 캐시 초기화 후 app import ──
-from config.settings import get_settings  # noqa: E402
+from config.settings import get_settings
 
 get_settings.cache_clear()
 
-from fastapi.testclient import TestClient  # noqa: E402
-from main import app  # noqa: E402
+from fastapi.testclient import TestClient
+from main import app
 
-import pytest  # noqa: E402
-import copy  # noqa: E402
-import random  # noqa: E402
-import numpy as np  # noqa: E402
-from unittest.mock import patch, AsyncMock, MagicMock  # noqa: E402
-from functools import wraps  # noqa: E402
+import pytest
+import copy
+import random
+import numpy as np
+from unittest.mock import patch, AsyncMock, MagicMock
+from functools import wraps
 
 # ============================================================
 # 상수
@@ -33,11 +30,10 @@ from functools import wraps  # noqa: E402
 TEST_API_KEY = os.environ["INTERNAL_API_KEY"]
 HEADERS = {"X-Internal-API-Key": TEST_API_KEY}
 
+
 # ============================================================
 # Mock 데이터 생성 헬퍼
 # ============================================================
-
-
 def mock_metadata():
     return {
         "width": 1920,

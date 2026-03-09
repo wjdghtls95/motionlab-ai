@@ -1,12 +1,8 @@
-# ============================================================
-# tests/e2e/test_analyze_endpoint.py
-# ============================================================
 """
 E2E 엔드포인트 테스트 — /analyze API 검증
 """
 
-import pytest
-from tests.e2e.conftest import e2e_mocks, HEADERS
+from tests.e2e.conftest import e2e_mocks
 
 
 class TestAnalyzeSuccess:

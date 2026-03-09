@@ -1,12 +1,8 @@
-# ============================================================
-# tests/e2e/test_analyze_scenario.py
-# ============================================================
 """
 E2E 시나리오 테스트 — 실제 사용 흐름 시뮬레이션
 """
 
-import pytest
-from tests.e2e.conftest import e2e_mocks, HEADERS
+from tests.e2e.conftest import e2e_mocks
 
 
 class TestScenarioHealthThenAnalyze:
