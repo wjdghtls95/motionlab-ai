@@ -13,6 +13,13 @@ class Settings(BaseSettings):
     HOST: str = "0.0.0.0"
     PORT: int = 8000
 
+    # 환경 구분 (development | production)
+    APP_ENV: str = "development"
+
+    # CORS 허용 출처 (쉼표 구분 문자열, 운영 환경에서만 적용)
+    # 예: "http://localhost:3000,https://api.motionlab.kr"
+    ALLOWED_ORIGINS: str = "http://localhost:3000"
+
     # 인증
     INTERNAL_API_KEY: str
 
