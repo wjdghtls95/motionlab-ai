@@ -78,7 +78,7 @@ class MediaPipeAnalyzer:
         duration = total_frames / fps if fps > 0 else 0
 
         logger.info(
-            f"📊 영상 정보: " f"{total_frames} frames, {fps:.1f} fps, {duration:.1f}s"
+            f"📊 영상 정보: {total_frames} frames, {fps:.1f} fps, {duration:.1f}s"
         )
 
         if duration < 1.0:
@@ -156,7 +156,7 @@ class MediaPipeAnalyzer:
         if frame_index % interval == 0:
             progress = (frame_index / total_frames) * 100
             logger.debug(
-                f"🔄 진행률: {progress:.0f}% " f"({frame_index}/{total_frames} frames)"
+                f"🔄 진행률: {progress:.0f}% ({frame_index}/{total_frames} frames)"
             )
 
     def get_landmark_by_name(

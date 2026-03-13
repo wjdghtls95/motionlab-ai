@@ -6,7 +6,6 @@ from tests.e2e.conftest import e2e_mocks
 
 
 class TestScenarioHealthThenAnalyze:
-
     @e2e_mocks
     def test_health_then_analyze(self, client, headers, golf_request):
         health = client.get("/health")
@@ -18,7 +17,6 @@ class TestScenarioHealthThenAnalyze:
 
 
 class TestScenarioSameVideoMultipleLevels:
-
     @e2e_mocks
     def test_same_video_different_levels(self, client, headers, golf_request):
         results = {}
@@ -34,7 +32,6 @@ class TestScenarioSameVideoMultipleLevels:
 
 
 class TestScenarioAuthRetry:
-
     @e2e_mocks
     def test_auth_fail_then_succeed(self, client, headers, golf_request):
         bad_headers = {"X-Internal-API-Key": "wrong"}
@@ -55,7 +52,6 @@ class TestScenarioAuthRetry:
 
 
 class TestScenarioSequentialAnalysis:
-
     @e2e_mocks
     def test_sequential_all_levels(self, client, headers, golf_request):
         for level in ["BEGINNER", "INTERMEDIATE", "ADVANCED", "PRO"]:
@@ -68,7 +64,6 @@ class TestScenarioSequentialAnalysis:
 
 
 class TestScenarioDuplicateRequest:
-
     @e2e_mocks
     def test_duplicate_request_same_result(self, client, headers, golf_request):
         response1 = client.post("/analyze", json=golf_request, headers=headers)
@@ -85,7 +80,6 @@ class TestScenarioDuplicateRequest:
 
 
 class TestScenarioValidationThenSuccess:
-
     @e2e_mocks
     def test_fix_and_retry(self, client, headers, golf_request):
         bad_body = {

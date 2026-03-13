@@ -129,7 +129,7 @@ def _resolve_angles_for_level(
                     UserLevel.INTERMEDIATE.value, next(iter(levels.values()))
                 )
                 logger.warning(
-                    f"⚠️ {angle_name}: 레벨 '{level_key}' 없음, " f"fallback 사용"
+                    f"⚠️ {angle_name}: 레벨 '{level_key}' 없음, fallback 사용"
                 )
 
             entry["ideal_range"] = level_config.get(
@@ -192,9 +192,7 @@ def get_sport_config(
     sport = config.get(sport_type)
     if not sport:
         available = list(config.keys())
-        raise ValueError(
-            f"지원하지 않는 종목: {sport_type}. " f"사용 가능: {available}"
-        )
+        raise ValueError(f"지원하지 않는 종목: {sport_type}. 사용 가능: {available}")
 
     # ========== sub_category 검증 ==========
     sub_categories = sport.get("sub_categories", sport)
@@ -202,7 +200,7 @@ def get_sport_config(
     if not sub:
         available = list(sub_categories.keys())
         raise ValueError(
-            f"지원하지 않는 서브카테고리: {sub_category}. " f"사용 가능: {available}"
+            f"지원하지 않는 서브카테고리: {sub_category}. 사용 가능: {available}"
         )
 
     # ========== 각도 resolve ==========

@@ -2,6 +2,7 @@
 MotionLab AI - 로깅 유틸리티
 민감 정보 마스킹 및 로그 포맷 설정
 """
+
 import logging
 import re
 
@@ -9,6 +10,7 @@ from config.settings import get_settings
 
 # 설정 로드
 settings = get_settings()
+
 
 def setup_logger(name: str = "motionlab-ai") -> logging.Logger:
     """
@@ -37,7 +39,7 @@ def setup_logger(name: str = "motionlab-ai") -> logging.Logger:
     # 로그 포맷
     formatter = logging.Formatter(
         fmt="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-        datefmt="%Y-%m-%d %H:%M:%S"
+        datefmt="%Y-%m-%d %H:%M:%S",
     )
     console_handler.setFormatter(formatter)
 
@@ -64,25 +66,13 @@ def mask_sensitive(text: str) -> str:
         "https://example.com?key=***"
     """
     # OpenAI API 키 마스킹
-    text = re.sub(
-        r'(sk-[a-zA-Z0-9-]{10,})',
-        lambda m: m.group(1)[:10] + "***",
-        text
-    )
+    text = re.sub(r"(sk-[a-zA-Z0-9-]{10,})", lambda m: m.group(1)[:10] + "***", text)
 
     # URL의 query parameter 마스킹
-    text = re.sub(
-        r'([?&][a-zA-Z_]+)=([^&\s]+)',
-        r'\1=***',
-        text
-    )
+    text = re.sub(r"([?&][a-zA-Z_]+)=([^&\s]+)", r"\1=***", text)
 
     # JWT 토큰 마스킹
-    text = re.sub(
-        r'(Bearer\s+)([a-zA-Z0-9._-]+)',
-        r'\1***',
-        text
-    )
+    text = re.sub(r"(Bearer\s+)([a-zA-Z0-9._-]+)", r"\1***", text)
 
     return text
 

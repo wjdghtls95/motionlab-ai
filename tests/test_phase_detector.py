@@ -110,7 +110,6 @@ def squat_config():
 
 
 class TestPhaseDetector:
-
     # 1. 정상 스윙 감지 — 최소 3개 이상 구간
     def test_normal_swing_detection(self, swing_config):
         values = _generate_swing_curve(100)
