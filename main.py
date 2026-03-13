@@ -55,12 +55,19 @@ app = FastAPI(
 )
 
 # CORS 설정
+# 개발 환경: 와일드카드(로컬 테스트 편의)
+# 운영 환경: ALLOWED_ORIGINS 환경변수에 명시된 출처만 허용
+_is_development = settings.APP_ENV == "development"
+_allowed_origins = ["*"] if _is_development else settings.ALLOWED_ORIGINS.split(",")
+_allowed_methods = ["*"] if _is_development else ["GET", "POST"]
+_allowed_headers = ["*"] if _is_development else ["X-Internal-API-Key", "Content-Type"]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # 프로덕션에서는 특정 도메인만 허용
+    allow_origins=_allowed_origins,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=_allowed_methods,
+    allow_headers=_allowed_headers,
 )
 
 # 라우터 등록
