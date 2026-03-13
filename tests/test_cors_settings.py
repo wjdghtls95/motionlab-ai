@@ -3,7 +3,6 @@ R-006: FastAPI CORS 와일드카드 제한 테스트
 
 APP_ENV에 따라 CORS 허용 출처가 올바르게 적용되는지 검증
 """
-import pytest
 from unittest.mock import patch
 from fastapi.testclient import TestClient
 
