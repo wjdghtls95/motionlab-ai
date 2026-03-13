@@ -70,7 +70,7 @@ class PromptLoader:
 
             available = [f.name for f in self.template_dir.glob("*.yaml")]
             raise FileNotFoundError(
-                f"Template not found: {file_path}. " f"Available: {available}"
+                f"Template not found: {file_path}. Available: {available}"
             )
 
         # YAML 파일 읽기 (항상 최신 반영)
@@ -82,8 +82,7 @@ class PromptLoader:
         version_full = self._get_git_commit_hash(file_path, short=False)
 
         logger.debug(
-            f"✅ 프롬프트 로드: {sport_type}/{sub_category}, "
-            f"version={version_short}"
+            f"✅ 프롬프트 로드: {sport_type}/{sub_category}, version={version_short}"
         )
 
         # Jinja2 렌더링

@@ -53,8 +53,7 @@ def retry(
 
                     if not is_retryable:
                         logger.warning(
-                            f"⛔ [Retry Aborted] {func.__name__}: "
-                            f"{e} (retryable=False)"
+                            f"⛔ [Retry Aborted] {func.__name__}: {e} (retryable=False)"
                         )
                         raise e
 
@@ -87,8 +86,7 @@ def retry(
 
                     if not is_retryable:
                         logger.warning(
-                            f"⛔ [Retry Aborted] {func.__name__}: "
-                            f"{e} (retryable=False)"
+                            f"⛔ [Retry Aborted] {func.__name__}: {e} (retryable=False)"
                         )
                         raise e
 

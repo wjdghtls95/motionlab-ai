@@ -64,7 +64,6 @@ class AnalysisService:
         )
 
         async with VideoResource(motion_id, video_url) as video_path:
-
             # ========== 영상 다운로드 ==========
             with timer.next_step(total, "영상 다운로드"):
                 pass  # VideoResource context manager가 이미 다운로드 완료

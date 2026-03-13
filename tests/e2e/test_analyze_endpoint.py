@@ -6,7 +6,6 @@ from tests.e2e.conftest import e2e_mocks
 
 
 class TestAnalyzeSuccess:
-
     @e2e_mocks
     def test_full_pipeline(self, client, headers, golf_request):
         response = client.post("/analyze", json=golf_request, headers=headers)
@@ -87,7 +86,6 @@ class TestAnalyzeSuccess:
 
 
 class TestAnalyzeAuth:
-
     def test_missing_api_key(self, client, golf_request):
         response = client.post("/analyze", json=golf_request)
         assert response.status_code == 401
@@ -106,7 +104,6 @@ class TestAnalyzeAuth:
 
 
 class TestAnalyzeValidation:
-
     def test_missing_motion_id(self, client, headers):
         body = {
             "video_url": "https://example.com/video.mp4",
@@ -160,7 +157,6 @@ class TestAnalyzeValidation:
 
 
 class TestAnalyzeLevel:
-
     @e2e_mocks
     def test_beginner_level(self, client, headers, golf_request):
         golf_request["level"] = "BEGINNER"
@@ -189,7 +185,6 @@ class TestAnalyzeLevel:
 
 
 class TestAnalyzeEdgeCases:
-
     @e2e_mocks
     def test_empty_video_url_string(self, client, headers):
         body = {
@@ -240,7 +235,6 @@ class TestAnalyzeEdgeCases:
 
 
 class TestHealthEndpoint:
-
     def test_health_check(self, client):
         response = client.get("/health")
         assert response.status_code == 200

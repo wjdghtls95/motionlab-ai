@@ -29,7 +29,6 @@ def sample_angle_config():
 
 
 class TestAngleScoring:
-
     # 1. 전부 ideal_range 안 → 전부 90점
     def test_all_ideal(self, sample_angle_config):
         calc = AngleCalculator(sample_angle_config)

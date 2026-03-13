@@ -2,6 +2,7 @@
 MotionLab AI - 환경 설정 관리
 .env 파일의 환경 변수를 로드하고 검증
 """
+
 from functools import lru_cache
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -27,21 +28,18 @@ class Settings(BaseSettings):
 
     # 비디오 처리
     MAX_VIDEO_SIZE_MB: int = 500
-    TEMP_VIDEO_DIR: str = './temp_videos'
+    TEMP_VIDEO_DIR: str = "./temp_videos"
 
     # MediaPipe 설정
-    MEDIAPIPE_MODEL_COMPLEXITY: int = 1 # 정확도 vs 속도 균형
-    MEDIAPIPE_MIN_DETECTION_CONFIDENCE: float = 0.5 # 일반적인 감지 난이도
-    MEDIAPIPE_MIN_TRACKING_CONFIDENCE: float = 0.5 # 일반적인 추적 난이도
+    MEDIAPIPE_MODEL_COMPLEXITY: int = 1  # 정확도 vs 속도 균형
+    MEDIAPIPE_MIN_DETECTION_CONFIDENCE: float = 0.5  # 일반적인 감지 난이도
+    MEDIAPIPE_MIN_TRACKING_CONFIDENCE: float = 0.5  # 일반적인 추적 난이도
 
     # 로깅
     LOG_LEVEL: str = "INFO"
 
     model_config = SettingsConfigDict(
-        env_file=".env",
-        env_file_encoding="utf-8",
-        case_sensitive=True,
-        extra="ignore"
+        env_file=".env", env_file_encoding="utf-8", case_sensitive=True, extra="ignore"
     )
 
 
