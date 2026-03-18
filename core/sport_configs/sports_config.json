@@ -1,11 +1,11 @@
 {
   "meta": {
     "config_version": "2.0.0",
-    "generated_at": "2026-02-27T16:24:43.072004",
+    "generated_at": "2026-03-19T00:41:07.999035",
     "source_csv_hash": "sha256:4c9565b88758",
     "source_folder": "v2.0",
     "generator": "csv_to_config.py",
-    "changelog": "등급별 levels 구조 도입, v1 코드 제거"
+    "changelog": "등급별 levels 구조 도입, v1 코드 제거 | v1.0 마이그레이션: GOLF(IRON/WEDGE/PUTTER) + WEIGHT(SQUAT/DEADLIFT/BENCH_PRESS) 추가"
   },
   "sports": {
     "GOLF": {
@@ -32,19 +32,31 @@
               },
               "levels": {
                 "PRO": {
-                  "ideal_range": [165.0, 180.0],
+                  "ideal_range": [
+                    165.0,
+                    180.0
+                  ],
                   "weight": 0.17
                 },
                 "ADVANCED": {
-                  "ideal_range": [163.5, 180.0],
+                  "ideal_range": [
+                    163.5,
+                    180.0
+                  ],
                   "weight": 0.17
                 },
                 "INTERMEDIATE": {
-                  "ideal_range": [161.2, 180.0],
+                  "ideal_range": [
+                    161.2,
+                    180.0
+                  ],
                   "weight": 0.17
                 },
                 "BEGINNER": {
-                  "ideal_range": [157.5, 180.0],
+                  "ideal_range": [
+                    157.5,
+                    180.0
+                  ],
                   "weight": 0.17
                 }
               }
@@ -69,19 +81,31 @@
               },
               "levels": {
                 "PRO": {
-                  "ideal_range": [75.0, 105.0],
+                  "ideal_range": [
+                    75.0,
+                    105.0
+                  ],
                   "weight": 0.17
                 },
                 "ADVANCED": {
-                  "ideal_range": [72.0, 108.0],
+                  "ideal_range": [
+                    72.0,
+                    108.0
+                  ],
                   "weight": 0.17
                 },
                 "INTERMEDIATE": {
-                  "ideal_range": [67.5, 112.5],
+                  "ideal_range": [
+                    67.5,
+                    112.5
+                  ],
                   "weight": 0.17
                 },
                 "BEGINNER": {
-                  "ideal_range": [60.0, 120.0],
+                  "ideal_range": [
+                    60.0,
+                    120.0
+                  ],
                   "weight": 0.17
                 }
               }
@@ -106,19 +130,31 @@
               },
               "levels": {
                 "PRO": {
-                  "ideal_range": [143.3, 160.1],
+                  "ideal_range": [
+                    143.3,
+                    160.1
+                  ],
                   "weight": 0.17
                 },
                 "ADVANCED": {
-                  "ideal_range": [141.6, 161.8],
+                  "ideal_range": [
+                    141.6,
+                    161.8
+                  ],
                   "weight": 0.17
                 },
                 "INTERMEDIATE": {
-                  "ideal_range": [139.1, 164.3],
+                  "ideal_range": [
+                    139.1,
+                    164.3
+                  ],
                   "weight": 0.17
                 },
                 "BEGINNER": {
-                  "ideal_range": [134.9, 168.5],
+                  "ideal_range": [
+                    134.9,
+                    168.5
+                  ],
                   "weight": 0.17
                 }
               }
@@ -139,19 +175,31 @@
               },
               "levels": {
                 "PRO": {
-                  "ideal_range": [50.0, 62.0],
+                  "ideal_range": [
+                    50.0,
+                    62.0
+                  ],
                   "weight": 0.16
                 },
                 "ADVANCED": {
-                  "ideal_range": [48.8, 63.2],
+                  "ideal_range": [
+                    48.8,
+                    63.2
+                  ],
                   "weight": 0.16
                 },
                 "INTERMEDIATE": {
-                  "ideal_range": [47.0, 65.0],
+                  "ideal_range": [
+                    47.0,
+                    65.0
+                  ],
                   "weight": 0.16
                 },
                 "BEGINNER": {
-                  "ideal_range": [44.0, 68.0],
+                  "ideal_range": [
+                    44.0,
+                    68.0
+                  ],
                   "weight": 0.16
                 }
               }
@@ -176,19 +224,31 @@
               },
               "levels": {
                 "PRO": {
-                  "ideal_range": [120.0, 149.8],
+                  "ideal_range": [
+                    120.0,
+                    149.8
+                  ],
                   "weight": 0.17
                 },
                 "ADVANCED": {
-                  "ideal_range": [120.0, 152.8],
+                  "ideal_range": [
+                    120.0,
+                    152.8
+                  ],
                   "weight": 0.17
                 },
                 "INTERMEDIATE": {
-                  "ideal_range": [120.0, 157.3],
+                  "ideal_range": [
+                    120.0,
+                    157.3
+                  ],
                   "weight": 0.17
                 },
                 "BEGINNER": {
-                  "ideal_range": [120.0, 164.8],
+                  "ideal_range": [
+                    120.0,
+                    164.8
+                  ],
                   "weight": 0.17
                 }
               }
@@ -213,19 +273,31 @@
               },
               "levels": {
                 "PRO": {
-                  "ideal_range": [134.7, 172.2],
+                  "ideal_range": [
+                    134.7,
+                    172.2
+                  ],
                   "weight": 0.16
                 },
                 "ADVANCED": {
-                  "ideal_range": [130.9, 175.9],
+                  "ideal_range": [
+                    130.9,
+                    175.9
+                  ],
                   "weight": 0.16
                 },
                 "INTERMEDIATE": {
-                  "ideal_range": [125.3, 180.0],
+                  "ideal_range": [
+                    125.3,
+                    180.0
+                  ],
                   "weight": 0.16
                 },
                 "BEGINNER": {
-                  "ideal_range": [125.0, 180.0],
+                  "ideal_range": [
+                    125.0,
+                    180.0
+                  ],
                   "weight": 0.16
                 }
               }
@@ -288,6 +360,1445 @@
               }
             }
           ]
+        },
+        "IRON": {
+          "angles": {
+            "left_arm_angle": {
+              "points": [
+                "left_shoulder",
+                "left_elbow",
+                "left_wrist"
+              ],
+              "description": "리드팔 신전 Driver와 동일",
+              "data_source": {
+                "paper": "Kim2018/Hume2005",
+                "original_value": null,
+                "std": null,
+                "conversion": "direct",
+                "mediapipe_center": 167.5
+              },
+              "angle_validation": {
+                "min_normal": 140.0,
+                "max_normal": 180.0
+              },
+              "levels": {
+                "PRO": {
+                  "ideal_range": [
+                    155.0,
+                    180.0
+                  ],
+                  "weight": 0.1667
+                },
+                "ADVANCED": {
+                  "ideal_range": [
+                    155.0,
+                    180.0
+                  ],
+                  "weight": 0.1667
+                },
+                "INTERMEDIATE": {
+                  "ideal_range": [
+                    155.0,
+                    180.0
+                  ],
+                  "weight": 0.1667
+                },
+                "BEGINNER": {
+                  "ideal_range": [
+                    155.0,
+                    180.0
+                  ],
+                  "weight": 0.1667
+                }
+              }
+            },
+            "right_arm_angle": {
+              "points": [
+                "right_shoulder",
+                "right_elbow",
+                "right_wrist"
+              ],
+              "description": "아이언은 스윙이 짧아 약간 좁은 범위",
+              "data_source": {
+                "paper": "Meister2011",
+                "original_value": null,
+                "std": null,
+                "conversion": "direct",
+                "mediapipe_center": 93.0
+              },
+              "angle_validation": {
+                "min_normal": 63.0,
+                "max_normal": 123.0
+              },
+              "levels": {
+                "PRO": {
+                  "ideal_range": [
+                    78.0,
+                    108.0
+                  ],
+                  "weight": 0.1667
+                },
+                "ADVANCED": {
+                  "ideal_range": [
+                    78.0,
+                    108.0
+                  ],
+                  "weight": 0.1667
+                },
+                "INTERMEDIATE": {
+                  "ideal_range": [
+                    78.0,
+                    108.0
+                  ],
+                  "weight": 0.1667
+                },
+                "BEGINNER": {
+                  "ideal_range": [
+                    78.0,
+                    108.0
+                  ],
+                  "weight": 0.1667
+                }
+              }
+            },
+            "spine_angle": {
+              "points": [
+                "left_hip",
+                "left_shoulder",
+                "nose"
+              ],
+              "description": "아이언은 Driver보다 상체 숙임이 큼",
+              "data_source": {
+                "paper": "Severin2020",
+                "original_value": null,
+                "std": null,
+                "conversion": "direct",
+                "mediapipe_center": 150.0
+              },
+              "angle_validation": {
+                "min_normal": 120.0,
+                "max_normal": 178.0
+              },
+              "levels": {
+                "PRO": {
+                  "ideal_range": [
+                    135.0,
+                    165.0
+                  ],
+                  "weight": 0.1667
+                },
+                "ADVANCED": {
+                  "ideal_range": [
+                    135.0,
+                    165.0
+                  ],
+                  "weight": 0.1667
+                },
+                "INTERMEDIATE": {
+                  "ideal_range": [
+                    135.0,
+                    165.0
+                  ],
+                  "weight": 0.1667
+                },
+                "BEGINNER": {
+                  "ideal_range": [
+                    135.0,
+                    165.0
+                  ],
+                  "weight": 0.1667
+                }
+              }
+            },
+            "hip_shoulder_separation": {
+              "points": null,
+              "description": "아이언 X-factor가 Driver보다 약간 높음",
+              "data_source": {
+                "paper": "Severin2020",
+                "original_value": null,
+                "std": null,
+                "conversion": "direct",
+                "mediapipe_center": 45.5
+              },
+              "angle_validation": {
+                "min_normal": 18.0,
+                "max_normal": 68.0
+              },
+              "levels": {
+                "PRO": {
+                  "ideal_range": [
+                    33.0,
+                    58.0
+                  ],
+                  "weight": 0.1667
+                },
+                "ADVANCED": {
+                  "ideal_range": [
+                    33.0,
+                    58.0
+                  ],
+                  "weight": 0.1667
+                },
+                "INTERMEDIATE": {
+                  "ideal_range": [
+                    33.0,
+                    58.0
+                  ],
+                  "weight": 0.1667
+                },
+                "BEGINNER": {
+                  "ideal_range": [
+                    33.0,
+                    58.0
+                  ],
+                  "weight": 0.1667
+                }
+              }
+            },
+            "left_knee_angle": {
+              "points": [
+                "left_hip",
+                "left_knee",
+                "left_ankle"
+              ],
+              "description": "아이언이 Driver보다 무릎 약간 더 굽힘",
+              "data_source": {
+                "paper": "Severin2020",
+                "original_value": null,
+                "std": null,
+                "conversion": "direct",
+                "mediapipe_center": 149.5
+              },
+              "angle_validation": {
+                "min_normal": 116.0,
+                "max_normal": 180.0
+              },
+              "levels": {
+                "PRO": {
+                  "ideal_range": [
+                    131.0,
+                    168.0
+                  ],
+                  "weight": 0.1667
+                },
+                "ADVANCED": {
+                  "ideal_range": [
+                    131.0,
+                    168.0
+                  ],
+                  "weight": 0.1667
+                },
+                "INTERMEDIATE": {
+                  "ideal_range": [
+                    131.0,
+                    168.0
+                  ],
+                  "weight": 0.1667
+                },
+                "BEGINNER": {
+                  "ideal_range": [
+                    131.0,
+                    168.0
+                  ],
+                  "weight": 0.1667
+                }
+              }
+            },
+            "right_knee_angle": {
+              "points": [
+                "right_hip",
+                "right_knee",
+                "right_ankle"
+              ],
+              "description": "트레일 무릎",
+              "data_source": {
+                "paper": "Severin2020",
+                "original_value": null,
+                "std": null,
+                "conversion": "direct",
+                "mediapipe_center": 155.5
+              },
+              "angle_validation": {
+                "min_normal": 123.0,
+                "max_normal": 180.0
+              },
+              "levels": {
+                "PRO": {
+                  "ideal_range": [
+                    138.0,
+                    173.0
+                  ],
+                  "weight": 0.1667
+                },
+                "ADVANCED": {
+                  "ideal_range": [
+                    138.0,
+                    173.0
+                  ],
+                  "weight": 0.1667
+                },
+                "INTERMEDIATE": {
+                  "ideal_range": [
+                    138.0,
+                    173.0
+                  ],
+                  "weight": 0.1667
+                },
+                "BEGINNER": {
+                  "ideal_range": [
+                    138.0,
+                    173.0
+                  ],
+                  "weight": 0.1667
+                }
+              }
+            }
+          },
+          "phases": []
+        },
+        "PUTTER": {
+          "angles": {
+            "left_arm_angle": {
+              "points": [
+                "left_shoulder",
+                "left_elbow",
+                "left_wrist"
+              ],
+              "description": "퍼팅은 팔을 완전히 펴지 않음",
+              "data_source": {
+                "paper": "일반 퍼팅 교본",
+                "original_value": null,
+                "std": null,
+                "conversion": "direct",
+                "mediapipe_center": 168.0
+              },
+              "angle_validation": {
+                "min_normal": 145.0,
+                "max_normal": 180.0
+              },
+              "levels": {
+                "PRO": {
+                  "ideal_range": [
+                    158.0,
+                    178.0
+                  ],
+                  "weight": 0.25
+                },
+                "ADVANCED": {
+                  "ideal_range": [
+                    158.0,
+                    178.0
+                  ],
+                  "weight": 0.25
+                },
+                "INTERMEDIATE": {
+                  "ideal_range": [
+                    158.0,
+                    178.0
+                  ],
+                  "weight": 0.25
+                },
+                "BEGINNER": {
+                  "ideal_range": [
+                    158.0,
+                    178.0
+                  ],
+                  "weight": 0.25
+                }
+              }
+            },
+            "right_arm_angle": {
+              "points": [
+                "right_shoulder",
+                "right_elbow",
+                "right_wrist"
+              ],
+              "description": "양팔이 비슷한 각도 유지",
+              "data_source": {
+                "paper": "일반 퍼팅 교본",
+                "original_value": null,
+                "std": null,
+                "conversion": "direct",
+                "mediapipe_center": 165.0
+              },
+              "angle_validation": {
+                "min_normal": 140.0,
+                "max_normal": 180.0
+              },
+              "levels": {
+                "PRO": {
+                  "ideal_range": [
+                    153.0,
+                    177.0
+                  ],
+                  "weight": 0.25
+                },
+                "ADVANCED": {
+                  "ideal_range": [
+                    153.0,
+                    177.0
+                  ],
+                  "weight": 0.25
+                },
+                "INTERMEDIATE": {
+                  "ideal_range": [
+                    153.0,
+                    177.0
+                  ],
+                  "weight": 0.25
+                },
+                "BEGINNER": {
+                  "ideal_range": [
+                    153.0,
+                    177.0
+                  ],
+                  "weight": 0.25
+                }
+              }
+            },
+            "spine_angle": {
+              "points": [
+                "left_hip",
+                "left_shoulder",
+                "nose"
+              ],
+              "description": "퍼팅 어드레스에서 눈이 볼 위에",
+              "data_source": {
+                "paper": "일반 퍼팅 교본",
+                "original_value": null,
+                "std": null,
+                "conversion": "direct",
+                "mediapipe_center": 142.5
+              },
+              "angle_validation": {
+                "min_normal": 118.0,
+                "max_normal": 168.0
+              },
+              "levels": {
+                "PRO": {
+                  "ideal_range": [
+                    130.0,
+                    155.0
+                  ],
+                  "weight": 0.25
+                },
+                "ADVANCED": {
+                  "ideal_range": [
+                    130.0,
+                    155.0
+                  ],
+                  "weight": 0.25
+                },
+                "INTERMEDIATE": {
+                  "ideal_range": [
+                    130.0,
+                    155.0
+                  ],
+                  "weight": 0.25
+                },
+                "BEGINNER": {
+                  "ideal_range": [
+                    130.0,
+                    155.0
+                  ],
+                  "weight": 0.25
+                }
+              }
+            },
+            "shoulder_alignment": {
+              "points": null,
+              "description": "퍼팅에서 어깨 정렬이 핵심",
+              "data_source": {
+                "paper": "일반 퍼팅 교본",
+                "original_value": null,
+                "std": null,
+                "conversion": "direct",
+                "mediapipe_center": 175.0
+              },
+              "angle_validation": {
+                "min_normal": 160.0,
+                "max_normal": 180.0
+              },
+              "levels": {
+                "PRO": {
+                  "ideal_range": [
+                    170.0,
+                    180.0
+                  ],
+                  "weight": 0.25
+                },
+                "ADVANCED": {
+                  "ideal_range": [
+                    170.0,
+                    180.0
+                  ],
+                  "weight": 0.25
+                },
+                "INTERMEDIATE": {
+                  "ideal_range": [
+                    170.0,
+                    180.0
+                  ],
+                  "weight": 0.25
+                },
+                "BEGINNER": {
+                  "ideal_range": [
+                    170.0,
+                    180.0
+                  ],
+                  "weight": 0.25
+                }
+              }
+            }
+          },
+          "phases": []
+        },
+        "WEDGE": {
+          "angles": {
+            "left_arm_angle": {
+              "points": [
+                "left_shoulder",
+                "left_elbow",
+                "left_wrist"
+              ],
+              "description": "웨지는 3/4 스윙이 많아 약간 굽힘 허용",
+              "data_source": {
+                "paper": "Kim2018/Hume2005 외삽",
+                "original_value": null,
+                "std": null,
+                "conversion": "direct",
+                "mediapipe_center": 164.0
+              },
+              "angle_validation": {
+                "min_normal": 133.0,
+                "max_normal": 180.0
+              },
+              "levels": {
+                "PRO": {
+                  "ideal_range": [
+                    148.0,
+                    180.0
+                  ],
+                  "weight": 0.1667
+                },
+                "ADVANCED": {
+                  "ideal_range": [
+                    148.0,
+                    180.0
+                  ],
+                  "weight": 0.1667
+                },
+                "INTERMEDIATE": {
+                  "ideal_range": [
+                    148.0,
+                    180.0
+                  ],
+                  "weight": 0.1667
+                },
+                "BEGINNER": {
+                  "ideal_range": [
+                    148.0,
+                    180.0
+                  ],
+                  "weight": 0.1667
+                }
+              }
+            },
+            "right_arm_angle": {
+              "points": [
+                "right_shoulder",
+                "right_elbow",
+                "right_wrist"
+              ],
+              "description": "웨지 스윙은 백스윙이 짧아 팔꿈치 각도 넓음",
+              "data_source": {
+                "paper": "Meister2011 외삽",
+                "original_value": null,
+                "std": null,
+                "conversion": "direct",
+                "mediapipe_center": 98.5
+              },
+              "angle_validation": {
+                "min_normal": 67.0,
+                "max_normal": 128.0
+              },
+              "levels": {
+                "PRO": {
+                  "ideal_range": [
+                    82.0,
+                    115.0
+                  ],
+                  "weight": 0.1667
+                },
+                "ADVANCED": {
+                  "ideal_range": [
+                    82.0,
+                    115.0
+                  ],
+                  "weight": 0.1667
+                },
+                "INTERMEDIATE": {
+                  "ideal_range": [
+                    82.0,
+                    115.0
+                  ],
+                  "weight": 0.1667
+                },
+                "BEGINNER": {
+                  "ideal_range": [
+                    82.0,
+                    115.0
+                  ],
+                  "weight": 0.1667
+                }
+              }
+            },
+            "spine_angle": {
+              "points": [
+                "left_hip",
+                "left_shoulder",
+                "nose"
+              ],
+              "description": "클럽이 짧아 더 숙임",
+              "data_source": {
+                "paper": "Severin2020 Iron 기준 외삽",
+                "original_value": null,
+                "std": null,
+                "conversion": "direct",
+                "mediapipe_center": 145.0
+              },
+              "angle_validation": {
+                "min_normal": 115.0,
+                "max_normal": 175.0
+              },
+              "levels": {
+                "PRO": {
+                  "ideal_range": [
+                    130.0,
+                    160.0
+                  ],
+                  "weight": 0.1667
+                },
+                "ADVANCED": {
+                  "ideal_range": [
+                    130.0,
+                    160.0
+                  ],
+                  "weight": 0.1667
+                },
+                "INTERMEDIATE": {
+                  "ideal_range": [
+                    130.0,
+                    160.0
+                  ],
+                  "weight": 0.1667
+                },
+                "BEGINNER": {
+                  "ideal_range": [
+                    130.0,
+                    160.0
+                  ],
+                  "weight": 0.1667
+                }
+              }
+            },
+            "hip_shoulder_separation": {
+              "points": null,
+              "description": "짧은 스윙으로 회전 줄어듦",
+              "data_source": {
+                "paper": "Meister2011 외삽",
+                "original_value": null,
+                "std": null,
+                "conversion": "direct",
+                "mediapipe_center": 36.5
+              },
+              "angle_validation": {
+                "min_normal": 12.0,
+                "max_normal": 58.0
+              },
+              "levels": {
+                "PRO": {
+                  "ideal_range": [
+                    25.0,
+                    48.0
+                  ],
+                  "weight": 0.1667
+                },
+                "ADVANCED": {
+                  "ideal_range": [
+                    25.0,
+                    48.0
+                  ],
+                  "weight": 0.1667
+                },
+                "INTERMEDIATE": {
+                  "ideal_range": [
+                    25.0,
+                    48.0
+                  ],
+                  "weight": 0.1667
+                },
+                "BEGINNER": {
+                  "ideal_range": [
+                    25.0,
+                    48.0
+                  ],
+                  "weight": 0.1667
+                }
+              }
+            },
+            "left_knee_angle": {
+              "points": [
+                "left_hip",
+                "left_knee",
+                "left_ankle"
+              ],
+              "description": "하체 안정 중요",
+              "data_source": {
+                "paper": "Severin2020 Iron 기준 외삽",
+                "original_value": null,
+                "std": null,
+                "conversion": "direct",
+                "mediapipe_center": 157.5
+              },
+              "angle_validation": {
+                "min_normal": 125.0,
+                "max_normal": 180.0
+              },
+              "levels": {
+                "PRO": {
+                  "ideal_range": [
+                    140.0,
+                    175.0
+                  ],
+                  "weight": 0.1667
+                },
+                "ADVANCED": {
+                  "ideal_range": [
+                    140.0,
+                    175.0
+                  ],
+                  "weight": 0.1667
+                },
+                "INTERMEDIATE": {
+                  "ideal_range": [
+                    140.0,
+                    175.0
+                  ],
+                  "weight": 0.1667
+                },
+                "BEGINNER": {
+                  "ideal_range": [
+                    140.0,
+                    175.0
+                  ],
+                  "weight": 0.1667
+                }
+              }
+            },
+            "right_knee_angle": {
+              "points": [
+                "right_hip",
+                "right_knee",
+                "right_ankle"
+              ],
+              "description": "하체 안정 중요",
+              "data_source": {
+                "paper": "Severin2020 Iron 기준 외삽",
+                "original_value": null,
+                "std": null,
+                "conversion": "direct",
+                "mediapipe_center": 160.0
+              },
+              "angle_validation": {
+                "min_normal": 128.0,
+                "max_normal": 180.0
+              },
+              "levels": {
+                "PRO": {
+                  "ideal_range": [
+                    143.0,
+                    177.0
+                  ],
+                  "weight": 0.1667
+                },
+                "ADVANCED": {
+                  "ideal_range": [
+                    143.0,
+                    177.0
+                  ],
+                  "weight": 0.1667
+                },
+                "INTERMEDIATE": {
+                  "ideal_range": [
+                    143.0,
+                    177.0
+                  ],
+                  "weight": 0.1667
+                },
+                "BEGINNER": {
+                  "ideal_range": [
+                    143.0,
+                    177.0
+                  ],
+                  "weight": 0.1667
+                }
+              }
+            }
+          },
+          "phases": []
+        }
+      }
+    },
+    "WEIGHT": {
+      "sub_categories": {
+        "BENCH_PRESS": {
+          "angles": {
+            "elbow_angle": {
+              "points": [
+                "shoulder",
+                "elbow",
+                "wrist"
+              ],
+              "description": "과도한 하강은 어깨 부상 위험",
+              "data_source": {
+                "paper": "MedCrave2018",
+                "original_value": null,
+                "std": null,
+                "conversion": "direct",
+                "mediapipe_center": 90.0
+              },
+              "angle_validation": {
+                "min_normal": 60.0,
+                "max_normal": 120.0
+              },
+              "levels": {
+                "PRO": {
+                  "ideal_range": [
+                    75.0,
+                    105.0
+                  ],
+                  "weight": 0.25
+                },
+                "ADVANCED": {
+                  "ideal_range": [
+                    75.0,
+                    105.0
+                  ],
+                  "weight": 0.25
+                },
+                "INTERMEDIATE": {
+                  "ideal_range": [
+                    75.0,
+                    105.0
+                  ],
+                  "weight": 0.25
+                },
+                "BEGINNER": {
+                  "ideal_range": [
+                    75.0,
+                    105.0
+                  ],
+                  "weight": 0.25
+                }
+              }
+            },
+            "shoulder_angle": {
+              "points": [
+                "elbow",
+                "shoulder",
+                "hip"
+              ],
+              "description": "팔이 너무 벌어지면 어깨 부상",
+              "data_source": {
+                "paper": "MedCrave2018",
+                "original_value": null,
+                "std": null,
+                "conversion": "direct",
+                "mediapipe_center": 60.0
+              },
+              "angle_validation": {
+                "min_normal": 30.0,
+                "max_normal": 95.0
+              },
+              "levels": {
+                "PRO": {
+                  "ideal_range": [
+                    40.0,
+                    80.0
+                  ],
+                  "weight": 0.25
+                },
+                "ADVANCED": {
+                  "ideal_range": [
+                    40.0,
+                    80.0
+                  ],
+                  "weight": 0.25
+                },
+                "INTERMEDIATE": {
+                  "ideal_range": [
+                    40.0,
+                    80.0
+                  ],
+                  "weight": 0.25
+                },
+                "BEGINNER": {
+                  "ideal_range": [
+                    40.0,
+                    80.0
+                  ],
+                  "weight": 0.25
+                }
+              }
+            },
+            "wrist_angle": {
+              "points": [
+                "forearm",
+                "wrist",
+                "hand"
+              ],
+              "description": "손목 과신전 방지",
+              "data_source": {
+                "paper": "NSCA 일반",
+                "original_value": null,
+                "std": null,
+                "conversion": "direct",
+                "mediapipe_center": 170.0
+              },
+              "angle_validation": {
+                "min_normal": 145.0,
+                "max_normal": 180.0
+              },
+              "levels": {
+                "PRO": {
+                  "ideal_range": [
+                    160.0,
+                    180.0
+                  ],
+                  "weight": 0.25
+                },
+                "ADVANCED": {
+                  "ideal_range": [
+                    160.0,
+                    180.0
+                  ],
+                  "weight": 0.25
+                },
+                "INTERMEDIATE": {
+                  "ideal_range": [
+                    160.0,
+                    180.0
+                  ],
+                  "weight": 0.25
+                },
+                "BEGINNER": {
+                  "ideal_range": [
+                    160.0,
+                    180.0
+                  ],
+                  "weight": 0.25
+                }
+              }
+            },
+            "back_arch": {
+              "points": [
+                "shoulder",
+                "hip",
+                "bench_surface"
+              ],
+              "description": "과도한 아치는 척추 부담",
+              "data_source": {
+                "paper": "MedCrave2018",
+                "original_value": null,
+                "std": null,
+                "conversion": "direct",
+                "mediapipe_center": 170.0
+              },
+              "angle_validation": {
+                "min_normal": 145.0,
+                "max_normal": 180.0
+              },
+              "levels": {
+                "PRO": {
+                  "ideal_range": [
+                    160.0,
+                    180.0
+                  ],
+                  "weight": 0.25
+                },
+                "ADVANCED": {
+                  "ideal_range": [
+                    160.0,
+                    180.0
+                  ],
+                  "weight": 0.25
+                },
+                "INTERMEDIATE": {
+                  "ideal_range": [
+                    160.0,
+                    180.0
+                  ],
+                  "weight": 0.25
+                },
+                "BEGINNER": {
+                  "ideal_range": [
+                    160.0,
+                    180.0
+                  ],
+                  "weight": 0.25
+                }
+              }
+            }
+          },
+          "phases": []
+        },
+        "DEADLIFT": {
+          "angles": {
+            "knee_angle": {
+              "points": [
+                "hip",
+                "knee",
+                "ankle"
+              ],
+              "description": "데드리프트는 스쿼트보다 무릎 덜 굽힘",
+              "data_source": {
+                "paper": "Hales2009",
+                "original_value": null,
+                "std": null,
+                "conversion": "direct",
+                "mediapipe_center": 125.0
+              },
+              "angle_validation": {
+                "min_normal": 80.0,
+                "max_normal": 170.0
+              },
+              "levels": {
+                "PRO": {
+                  "ideal_range": [
+                    100.0,
+                    150.0
+                  ],
+                  "weight": 0.2
+                },
+                "ADVANCED": {
+                  "ideal_range": [
+                    100.0,
+                    150.0
+                  ],
+                  "weight": 0.2
+                },
+                "INTERMEDIATE": {
+                  "ideal_range": [
+                    100.0,
+                    150.0
+                  ],
+                  "weight": 0.2
+                },
+                "BEGINNER": {
+                  "ideal_range": [
+                    100.0,
+                    150.0
+                  ],
+                  "weight": 0.2
+                }
+              }
+            },
+            "hip_angle": {
+              "points": [
+                "shoulder",
+                "hip",
+                "knee"
+              ],
+              "description": "고관절 힌지 패턴",
+              "data_source": {
+                "paper": "Hales2009/MedCrave",
+                "original_value": null,
+                "std": null,
+                "conversion": "direct",
+                "mediapipe_center": 100.0
+              },
+              "angle_validation": {
+                "min_normal": 50.0,
+                "max_normal": 150.0
+              },
+              "levels": {
+                "PRO": {
+                  "ideal_range": [
+                    70.0,
+                    130.0
+                  ],
+                  "weight": 0.2
+                },
+                "ADVANCED": {
+                  "ideal_range": [
+                    70.0,
+                    130.0
+                  ],
+                  "weight": 0.2
+                },
+                "INTERMEDIATE": {
+                  "ideal_range": [
+                    70.0,
+                    130.0
+                  ],
+                  "weight": 0.2
+                },
+                "BEGINNER": {
+                  "ideal_range": [
+                    70.0,
+                    130.0
+                  ],
+                  "weight": 0.2
+                }
+              }
+            },
+            "spine_angle": {
+              "points": [
+                "hip",
+                "shoulder",
+                "head"
+              ],
+              "description": "내각 기준 스쿼트보다 전경 큼",
+              "data_source": {
+                "paper": "Hales2009",
+                "original_value": null,
+                "std": null,
+                "conversion": "direct",
+                "mediapipe_center": 150.0
+              },
+              "angle_validation": {
+                "min_normal": 115.0,
+                "max_normal": 180.0
+              },
+              "levels": {
+                "PRO": {
+                  "ideal_range": [
+                    130.0,
+                    170.0
+                  ],
+                  "weight": 0.2
+                },
+                "ADVANCED": {
+                  "ideal_range": [
+                    130.0,
+                    170.0
+                  ],
+                  "weight": 0.2
+                },
+                "INTERMEDIATE": {
+                  "ideal_range": [
+                    130.0,
+                    170.0
+                  ],
+                  "weight": 0.2
+                },
+                "BEGINNER": {
+                  "ideal_range": [
+                    130.0,
+                    170.0
+                  ],
+                  "weight": 0.2
+                }
+              }
+            },
+            "back_angle": {
+              "points": [
+                "shoulder",
+                "hip",
+                "vertical"
+              ],
+              "description": "등 라운딩 방지",
+              "data_source": {
+                "paper": "Hales2009",
+                "original_value": null,
+                "std": null,
+                "conversion": "direct",
+                "mediapipe_center": 147.5
+              },
+              "angle_validation": {
+                "min_normal": 115.0,
+                "max_normal": 175.0
+              },
+              "levels": {
+                "PRO": {
+                  "ideal_range": [
+                    130.0,
+                    165.0
+                  ],
+                  "weight": 0.2
+                },
+                "ADVANCED": {
+                  "ideal_range": [
+                    130.0,
+                    165.0
+                  ],
+                  "weight": 0.2
+                },
+                "INTERMEDIATE": {
+                  "ideal_range": [
+                    130.0,
+                    165.0
+                  ],
+                  "weight": 0.2
+                },
+                "BEGINNER": {
+                  "ideal_range": [
+                    130.0,
+                    165.0
+                  ],
+                  "weight": 0.2
+                }
+              }
+            },
+            "bar_path_angle": {
+              "points": null,
+              "description": "바가 몸에서 멀어지면 허리 부담",
+              "data_source": {
+                "paper": "Hales2009",
+                "original_value": null,
+                "std": null,
+                "conversion": "direct",
+                "mediapipe_center": 90.0
+              },
+              "angle_validation": {
+                "min_normal": 70.0,
+                "max_normal": 110.0
+              },
+              "levels": {
+                "PRO": {
+                  "ideal_range": [
+                    80.0,
+                    100.0
+                  ],
+                  "weight": 0.2
+                },
+                "ADVANCED": {
+                  "ideal_range": [
+                    80.0,
+                    100.0
+                  ],
+                  "weight": 0.2
+                },
+                "INTERMEDIATE": {
+                  "ideal_range": [
+                    80.0,
+                    100.0
+                  ],
+                  "weight": 0.2
+                },
+                "BEGINNER": {
+                  "ideal_range": [
+                    80.0,
+                    100.0
+                  ],
+                  "weight": 0.2
+                }
+              }
+            }
+          },
+          "phases": []
+        },
+        "SQUAT": {
+          "angles": {
+            "knee_angle": {
+              "points": [
+                "hip",
+                "knee",
+                "ankle"
+              ],
+              "description": "적정 스쿼트 깊이 내각",
+              "data_source": {
+                "paper": "LearnOpenCV/NSCA",
+                "original_value": null,
+                "std": null,
+                "conversion": "direct",
+                "mediapipe_center": 90.0
+              },
+              "angle_validation": {
+                "min_normal": 50.0,
+                "max_normal": 130.0
+              },
+              "levels": {
+                "PRO": {
+                  "ideal_range": [
+                    70.0,
+                    110.0
+                  ],
+                  "weight": 0.25
+                },
+                "ADVANCED": {
+                  "ideal_range": [
+                    70.0,
+                    110.0
+                  ],
+                  "weight": 0.25
+                },
+                "INTERMEDIATE": {
+                  "ideal_range": [
+                    70.0,
+                    110.0
+                  ],
+                  "weight": 0.25
+                },
+                "BEGINNER": {
+                  "ideal_range": [
+                    70.0,
+                    110.0
+                  ],
+                  "weight": 0.25
+                }
+              }
+            },
+            "hip_angle": {
+              "points": [
+                "shoulder",
+                "hip",
+                "knee"
+              ],
+              "description": "고관절 내각",
+              "data_source": {
+                "paper": "Hales2009",
+                "original_value": null,
+                "std": null,
+                "conversion": "direct",
+                "mediapipe_center": 85.0
+              },
+              "angle_validation": {
+                "min_normal": 40.0,
+                "max_normal": 130.0
+              },
+              "levels": {
+                "PRO": {
+                  "ideal_range": [
+                    60.0,
+                    110.0
+                  ],
+                  "weight": 0.25
+                },
+                "ADVANCED": {
+                  "ideal_range": [
+                    60.0,
+                    110.0
+                  ],
+                  "weight": 0.25
+                },
+                "INTERMEDIATE": {
+                  "ideal_range": [
+                    60.0,
+                    110.0
+                  ],
+                  "weight": 0.25
+                },
+                "BEGINNER": {
+                  "ideal_range": [
+                    60.0,
+                    110.0
+                  ],
+                  "weight": 0.25
+                }
+              }
+            },
+            "spine_angle": {
+              "points": [
+                "hip",
+                "shoulder",
+                "head"
+              ],
+              "description": "내각 기준 상체 기울기",
+              "data_source": {
+                "paper": "Hales2009",
+                "original_value": null,
+                "std": null,
+                "conversion": "direct",
+                "mediapipe_center": 160.0
+              },
+              "angle_validation": {
+                "min_normal": 130.0,
+                "max_normal": 180.0
+              },
+              "levels": {
+                "PRO": {
+                  "ideal_range": [
+                    145.0,
+                    175.0
+                  ],
+                  "weight": 0.25
+                },
+                "ADVANCED": {
+                  "ideal_range": [
+                    145.0,
+                    175.0
+                  ],
+                  "weight": 0.25
+                },
+                "INTERMEDIATE": {
+                  "ideal_range": [
+                    145.0,
+                    175.0
+                  ],
+                  "weight": 0.25
+                },
+                "BEGINNER": {
+                  "ideal_range": [
+                    145.0,
+                    175.0
+                  ],
+                  "weight": 0.25
+                }
+              }
+            },
+            "ankle_angle": {
+              "points": [
+                "knee",
+                "ankle",
+                "foot"
+              ],
+              "description": "발목 배굴",
+              "data_source": {
+                "paper": "NSCA",
+                "original_value": null,
+                "std": null,
+                "conversion": "direct",
+                "mediapipe_center": 72.5
+              },
+              "angle_validation": {
+                "min_normal": 50.0,
+                "max_normal": 95.0
+              },
+              "levels": {
+                "PRO": {
+                  "ideal_range": [
+                    60.0,
+                    85.0
+                  ],
+                  "weight": 0.25
+                },
+                "ADVANCED": {
+                  "ideal_range": [
+                    60.0,
+                    85.0
+                  ],
+                  "weight": 0.25
+                },
+                "INTERMEDIATE": {
+                  "ideal_range": [
+                    60.0,
+                    85.0
+                  ],
+                  "weight": 0.25
+                },
+                "BEGINNER": {
+                  "ideal_range": [
+                    60.0,
+                    85.0
+                  ],
+                  "weight": 0.25
+                }
+              }
+            }
+          },
+          "phases": []
         }
       }
     }
