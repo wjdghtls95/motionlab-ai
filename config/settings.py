@@ -45,6 +45,14 @@ class Settings(BaseSettings):
     # 로깅
     LOG_LEVEL: str = "INFO"
 
+    # Config 소스 설정
+    # local  — 이미지에 번들된 파일 사용 (기본값, 기존 동작 유지)
+    # file   — SPORTS_CONFIG_PATH 경로의 파일 사용 (volume mount 연동)
+    # remote — CONFIG_REMOTE_URL에서 HTTP fetch (실패 시 local fallback)
+    CONFIG_SOURCE: str = "local"
+    SPORTS_CONFIG_PATH: str = ""  # file 모드: 컨테이너 내부 절대 경로
+    CONFIG_REMOTE_URL: str = ""  # remote 모드: sports_config.json을 서빙하는 URL
+
     model_config = SettingsConfigDict(
         env_file=".env", env_file_encoding="utf-8", case_sensitive=True, extra="ignore"
     )
