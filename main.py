@@ -8,7 +8,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 
-from api import health, analyze
+from api import health, analyze, admin
 from config.settings import get_settings
 from utils.logger import logger, mask_sensitive
 
@@ -74,6 +74,7 @@ app.add_middleware(
 # 라우터 등록
 app.include_router(health.router, tags=["Health"])
 app.include_router(analyze.router, tags=["Analysis"])
+app.include_router(admin.router, tags=["Admin"])
 
 
 if __name__ == "__main__":

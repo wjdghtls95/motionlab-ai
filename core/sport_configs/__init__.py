@@ -10,13 +10,69 @@ from typing import Dict, Any, Optional, List
 from utils.logger import logger
 from .base_config import UserLevel
 from core.constants import AngleDefaults
+from config.settings import get_settings
 
-SPORTS_CONFIG_PATH = Path(__file__).parent / "sports_config.json"
+# 이미지에 번들된 기본 경로 (local 모드 및 remote fallback에서 사용)
+_LOCAL_CONFIG_PATH = Path(__file__).parent / "sports_config.json"
 
 # ========== 캐시 ==========
 _RAW_CONFIG: Optional[Dict[str, Any]] = None
 _CONFIG_VERSION: str = "unknown"
 _CONFIG_FORMAT: str = "v1"
+
+
+def _load_from_file(path: Path) -> Dict[str, Any]:
+    """파일 경로에서 JSON 로드"""
+    with open(path, "r", encoding="utf-8") as f:
+        return json.load(f)
+
+
+def _fetch_from_remote(url: str) -> Dict[str, Any]:
+    """
+    URL에서 HTTP GET으로 config를 가져온다.
+    실패 시 번들된 로컬 파일로 fallback.
+    """
+    try:
+        import httpx
+
+        response = httpx.get(url, timeout=10.0)
+        response.raise_for_status()
+        logger.info(f"✅ Remote config 로드 성공: {url}")
+        return response.json()
+    except Exception as e:
+        logger.warning(
+            f"⚠️ Remote config 로드 실패 ({e}). 로컬 파일로 fallback: {_LOCAL_CONFIG_PATH}"
+        )
+        return _load_from_file(_LOCAL_CONFIG_PATH)
+
+
+def _load_raw_config() -> Dict[str, Any]:
+    """
+    CONFIG_SOURCE 설정에 따라 config를 읽는다.
+
+    - local  (기본): 이미지 번들 파일
+    - file:         SPORTS_CONFIG_PATH 환경변수 경로
+    - remote:       CONFIG_REMOTE_URL HTTP fetch, 실패 시 local fallback
+    """
+    settings = get_settings()
+    source = settings.CONFIG_SOURCE
+
+    if source == "file":
+        path = (
+            Path(settings.SPORTS_CONFIG_PATH)
+            if settings.SPORTS_CONFIG_PATH
+            else _LOCAL_CONFIG_PATH
+        )
+        logger.info(f"📂 Config 소스: file ({path})")
+        return _load_from_file(path)
+
+    if source == "remote":
+        logger.info(f"🌐 Config 소스: remote ({settings.CONFIG_REMOTE_URL})")
+        return _fetch_from_remote(settings.CONFIG_REMOTE_URL)
+
+    # local (기본)
+    logger.info(f"📦 Config 소스: local ({_LOCAL_CONFIG_PATH})")
+    return _load_from_file(_LOCAL_CONFIG_PATH)
 
 
 def load_sports_config(force_reload: bool = False) -> Dict[str, Any]:
@@ -29,8 +85,7 @@ def load_sports_config(force_reload: bool = False) -> Dict[str, Any]:
     if _RAW_CONFIG is not None and not force_reload:
         return _RAW_CONFIG
 
-    with open(SPORTS_CONFIG_PATH, "r", encoding="utf-8") as f:
-        raw = json.load(f)
+    raw = _load_raw_config()
 
     # ========== v1/v2 구분 ==========
     if "meta" in raw and "sports" in raw:
