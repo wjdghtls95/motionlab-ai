@@ -30,7 +30,7 @@ mediapipe==0.10.14
 ml_dtypes==0.5.4
 mypy_extensions==1.1.0
 numpy==2.4.1
-openai==1.10.0
+openai==1.109.1
 opencv-contrib-python==4.11.0.86
 opencv-python==4.9.0.80
 opencv-python-headless==4.13.0.90
