@@ -7,7 +7,7 @@ import time
 import logging
 from typing import Dict, Any, Optional
 from pathlib import Path
-import yt_dlp
+import httpx
 import cv2
 
 from utils.exceptions import (
@@ -73,18 +73,17 @@ class VideoResource:
 
         self.is_local_file = False  # 다운로드 파일 표시
 
-        ydl_opts = {
-            "format": "best[ext=mp4]/best",
-            "outtmpl": output_path,
-            "quiet": True,
-            "no_warnings": True,
-        }
-
         for attempt in range(self.max_retries):
             try:
                 logger.info(f"[{attempt + 1}/{self.max_retries}] 영상 다운로드 중...")
-                with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-                    ydl.download([self.video_url])
+                async with httpx.AsyncClient(
+                    follow_redirects=True, timeout=60.0
+                ) as client:
+                    async with client.stream("GET", self.video_url) as response:
+                        response.raise_for_status()
+                        with open(output_path, "wb") as f:
+                            async for chunk in response.aiter_bytes(chunk_size=8192):
+                                f.write(chunk)
 
                 if os.path.exists(output_path):
                     return output_path
