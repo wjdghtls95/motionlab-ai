@@ -26,7 +26,7 @@ class Settings(BaseSettings):
 
     # OpenAI
     OPENAI_API_KEY: str = ""
-    ENABLE_LLM_NOOP: bool = True
+    ENABLE_LLM_NOOP: bool = False
 
     # LLM 설정
     LLM_MODEL: str = "gpt-4o-mini"
