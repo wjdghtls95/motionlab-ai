@@ -2,7 +2,12 @@
 E2E 시나리오 테스트 — 실제 사용 흐름 시뮬레이션
 """
 
+import pytest
+
 from tests.e2e.conftest import e2e_mocks
+
+# 모든 테스트를 e2e 마커로 분류 (CI에서 'pytest -m "not e2e"'로 제외 가능)
+pytestmark = pytest.mark.e2e
 
 
 class TestScenarioHealthThenAnalyze:

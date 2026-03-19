@@ -1,0 +1,6 @@
+# 테스트 전용 의존성 (pip install -r requirements-dev.txt)
+# CI에서는 requirements.txt 설치 후 이 파일을 추가 설치
+pytest>=9.0.0
+pytest-cov>=4.0.0
+pytest-asyncio>=0.23.0
+httpx>=0.26.0
