@@ -27,3 +27,6 @@ temp_videos/
 
 # Logs
 *.log
+
+# MediaPipe model files (large binaries, download separately)
+*.task

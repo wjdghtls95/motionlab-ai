@@ -43,9 +43,13 @@ import sys
 import tempfile
 from datetime import date
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
+import cv2
+import mediapipe as mp
 import numpy as np
+from mediapipe.tasks import python as mp_python
+from mediapipe.tasks.python import vision as mp_vision
 
 # motionlab-ai 패키지 루트를 경로에 추가 (scripts/ 하위에서 실행 시)
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -53,6 +57,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 from core.angle_calculator import AngleCalculator
 from core.mediapipe_analyzer import MediaPipeAnalyzer
 from core.sport_configs import load_sports_config
+from utils.exceptions.errors import NoKeypointsError, VideoTooShortError
 
 logging.basicConfig(
     level=logging.INFO,
@@ -76,6 +81,148 @@ _IDX_RIGHT_WRIST = 16
 _IDX_LEFT_HIP = 23
 _IDX_RIGHT_HIP = 24
 _WRIST_INDICES = [_IDX_LEFT_WRIST, _IDX_RIGHT_WRIST]
+
+# 캘리브레이션 전용 포즈 모델 경로
+# 환경변수 POSE_MODEL_PATH 또는 motionlab-config/models/pose_landmarker_heavy.task
+POSE_MODEL_PATH = os.getenv(
+    "POSE_MODEL_PATH",
+    str(
+        Path(__file__).parent.parent.parent
+        / "motionlab-config"
+        / "models"
+        / "pose_landmarker_heavy.task"
+    ),
+)
+
+
+# ──────────────────────────────────────────────────────────────
+# Heavy 포즈 분석기 (캘리브레이션 전용)
+# AI 서버 실시간 분석은 MediaPipeAnalyzer (legacy Full 모델) 유지
+# ──────────────────────────────────────────────────────────────
+
+
+class _HeavyPoseAnalyzer:
+    """
+    MediaPipe Tasks API + pose_landmarker_heavy.task 기반 포즈 분석기.
+
+    오프라인 캘리브레이션 전용 — 정확도 우선.
+    출력 형식은 MediaPipeAnalyzer.extract_landmarks()와 동일.
+    """
+
+    def extract_landmarks(self, video_path: str) -> Dict[str, Any]:
+        """영상에서 프레임별 랜드마크 추출 (Heavy 모델)."""
+        base_options = mp_python.BaseOptions(model_asset_path=POSE_MODEL_PATH)
+        options = mp_vision.PoseLandmarkerOptions(
+            base_options=base_options,
+            running_mode=mp_vision.RunningMode.VIDEO,
+            min_pose_detection_confidence=0.5,
+            min_tracking_confidence=0.5,
+        )
+
+        cap = cv2.VideoCapture(video_path)
+        if not cap.isOpened():
+            raise ValueError(f"영상을 열 수 없음: {video_path}")
+
+        fps = cap.get(cv2.CAP_PROP_FPS)
+        total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+        duration = total_frames / fps if fps > 0 else 0
+
+        logger.info(f"📹 MediaPipe Heavy 분석 시작: {video_path}")
+        logger.info(
+            f"📊 영상 정보: {total_frames} frames, {fps:.1f} fps, {duration:.1f}s"
+        )
+
+        if duration < 1.0:
+            cap.release()
+            raise VideoTooShortError(duration)
+
+        all_landmarks, valid_frames = self._process_frames(
+            cap, fps, total_frames, options
+        )
+
+        valid_ratio = valid_frames / total_frames if total_frames > 0 else 0
+        logger.info(
+            f"✅ MediaPipe Heavy 분석 완료: "
+            f"{valid_frames}/{total_frames} frames ({valid_ratio:.1%} 유효)"
+        )
+
+        if valid_ratio < 0.1:
+            raise NoKeypointsError()
+
+        return {
+            "frames": all_landmarks,
+            "total_frames": total_frames,
+            "valid_frames": valid_frames,
+            "fps": fps,
+        }
+
+    def _process_frames(
+        self,
+        cap: cv2.VideoCapture,
+        fps: float,
+        total_frames: int,
+        options: mp_vision.PoseLandmarkerOptions,
+    ) -> Tuple[list, int]:
+        """프레임 순회 및 랜드마크 추출."""
+        all_landmarks = []
+        valid_frames = 0
+        frame_index = 0
+
+        try:
+            with mp_vision.PoseLandmarker.create_from_options(options) as detector:
+                while cap.isOpened():
+                    ret, frame = cap.read()
+                    if not ret:
+                        break
+
+                    frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                    mp_image = mp.Image(
+                        image_format=mp.ImageFormat.SRGB, data=frame_rgb
+                    )
+                    timestamp_ms = int(frame_index * 1000 / fps)
+
+                    result = detector.detect_for_video(mp_image, timestamp_ms)
+
+                    if result.pose_landmarks:
+                        landmarks = [
+                            {
+                                "x": float(lm.x),
+                                "y": float(lm.y),
+                                "z": float(lm.z),
+                                "visibility": float(lm.visibility),
+                            }
+                            for lm in result.pose_landmarks[0]
+                        ]
+                        all_landmarks.append(
+                            {
+                                "frame_index": frame_index,
+                                "timestamp": frame_index / fps,
+                                "landmarks": landmarks,
+                            }
+                        )
+                        valid_frames += 1
+
+                    frame_index += 1
+                    MediaPipeAnalyzer._log_progress(frame_index, total_frames)
+        finally:
+            cap.release()
+
+        return all_landmarks, valid_frames
+
+
+def _create_pose_analyzer():
+    """
+    캘리브레이션용 포즈 분석기 생성.
+
+    POSE_MODEL_PATH가 존재하면 Heavy 모델 사용, 아니면 Full(legacy) fallback.
+    """
+    if Path(POSE_MODEL_PATH).exists():
+        logger.info(f"🎯 Heavy 모델 사용: {POSE_MODEL_PATH}")
+        return _HeavyPoseAnalyzer()
+    logger.warning(
+        f"⚠️  Heavy 모델 없음 → Full 모델(legacy) fallback: {POSE_MODEL_PATH}"
+    )
+    return MediaPipeAnalyzer()
 
 
 # ──────────────────────────────────────────────────────────────
@@ -163,7 +310,9 @@ def _hip_shoulder_separation_frame(landmarks: List[Dict]) -> Optional[float]:
 
     shoulder_angle = np.degrees(np.arctan2(rs["y"] - ls["y"], rs["x"] - ls["x"]))
     hip_angle = np.degrees(np.arctan2(rh["y"] - lh["y"], rh["x"] - lh["x"]))
-    return round(abs(shoulder_angle - hip_angle), 1)
+    diff = abs(shoulder_angle - hip_angle)
+    # arctan2 범위(-180~180) 차이가 180° 초과 시 보완각으로 변환
+    return round(min(diff, 360.0 - diff), 1)
 
 
 def _calc_landmark_motion(
@@ -267,7 +416,7 @@ def extract_angles_from_video(
     Returns:
         {"left_arm_angle": 168.3, ...} 또는 None (추출 실패 시)
     """
-    analyzer = MediaPipeAnalyzer()
+    analyzer = _create_pose_analyzer()
     landmarks_data = analyzer.extract_landmarks(video_path)
     calc = AngleCalculator(angle_config=angle_config_flat)
 
