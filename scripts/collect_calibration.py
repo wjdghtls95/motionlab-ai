@@ -56,6 +56,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from core.angle_calculator import AngleCalculator
 from core.mediapipe_analyzer import MediaPipeAnalyzer
+from core.phase_detector import PhaseDetector
 from core.sport_configs import load_sports_config
 from utils.exceptions.errors import NoKeypointsError, VideoTooShortError
 
@@ -73,14 +74,8 @@ SANITY_THRESHOLD = 30.0
 # 이 수 미만이면 샘플 부족으로 논문값 fallback
 MIN_SAMPLES = 5
 
-# MediaPipe 랜드마크 인덱스 (33개 pose landmarks)
-_IDX_LEFT_SHOULDER = 11
-_IDX_RIGHT_SHOULDER = 12
-_IDX_LEFT_WRIST = 15
-_IDX_RIGHT_WRIST = 16
-_IDX_LEFT_HIP = 23
-_IDX_RIGHT_HIP = 24
-_WRIST_INDICES = [_IDX_LEFT_WRIST, _IDX_RIGHT_WRIST]
+# Raw 랜드마크 저장 시 샘플링 간격 (3프레임마다 1개 저장)
+_LANDMARK_SAMPLE_INTERVAL = 3
 
 # 캘리브레이션 전용 포즈 모델 경로
 # 환경변수 POSE_MODEL_PATH 또는 motionlab-config/models/pose_landmarker_heavy.task
@@ -291,175 +286,191 @@ def download_video(url: str, output_path: str) -> bool:
 
 
 # ──────────────────────────────────────────────────────────────
-# 스윙 페이즈 감지
+# 페이즈 감지 + 각도 추출
 # ──────────────────────────────────────────────────────────────
 
 
-def _hip_shoulder_separation_frame(landmarks: List[Dict]) -> Optional[float]:
-    """단일 프레임의 hip-shoulder separation 각도 계산 (X-Factor)."""
-    required = [_IDX_LEFT_SHOULDER, _IDX_RIGHT_SHOULDER, _IDX_LEFT_HIP, _IDX_RIGHT_HIP]
-    if len(landmarks) <= max(required):
-        return None
-    if any(landmarks[i].get("visibility", 0) < 0.5 for i in required):
-        return None
-
-    ls = landmarks[_IDX_LEFT_SHOULDER]
-    rs = landmarks[_IDX_RIGHT_SHOULDER]
-    lh = landmarks[_IDX_LEFT_HIP]
-    rh = landmarks[_IDX_RIGHT_HIP]
-
-    shoulder_angle = np.degrees(np.arctan2(rs["y"] - ls["y"], rs["x"] - ls["x"]))
-    hip_angle = np.degrees(np.arctan2(rh["y"] - lh["y"], rh["x"] - lh["x"]))
-    diff = abs(shoulder_angle - hip_angle)
-    # arctan2 범위(-180~180) 차이가 180° 초과 시 보완각으로 변환
-    return round(min(diff, 360.0 - diff), 1)
-
-
-def _calc_landmark_motion(
-    frames: List[Dict], center_pos: int, window_size: int, indices: List[int]
-) -> float:
-    """윈도우 내 특정 랜드마크의 평균 이동 거리 계산 (어드레스 감지용)."""
-    half = window_size // 2
-    start = max(0, center_pos - half)
-    end = min(len(frames) - 1, center_pos + half)
-
-    total_motion = 0.0
-    count = 0
-    for i in range(start, end):
-        prev_lm = frames[i].get("landmarks", [])
-        curr_lm = frames[i + 1].get("landmarks", [])
-        for idx in indices:
-            if (
-                idx < len(prev_lm)
-                and idx < len(curr_lm)
-                and prev_lm[idx].get("visibility", 0) > 0.5
-                and curr_lm[idx].get("visibility", 0) > 0.5
-            ):
-                dx = curr_lm[idx]["x"] - prev_lm[idx]["x"]
-                dy = curr_lm[idx]["y"] - prev_lm[idx]["y"]
-                total_motion += np.sqrt(dx**2 + dy**2)
-                count += 1
-
-    return total_motion / count if count > 0 else float("inf")
-
-
-def detect_swing_phases(frames: List[Dict], fps: float) -> Dict[str, Optional[int]]:
+def _build_angles_per_frame(
+    frames: List[Dict], calc: AngleCalculator
+) -> Dict[int, Dict[str, float]]:
     """
-    스윙 영상에서 핵심 페이즈 프레임 위치를 감지.
+    프레임별 각도 맵 구성.
 
-    - address: 영상 초반 최소 모션 구간 (셋업 자세)
-    - top_of_backswing: hip-shoulder separation 최대 프레임
-
-    Returns:
-        {"address": frames_list_index, "top_of_backswing": frames_list_index}
-        감지 실패 시 해당 값 None
+    AngleCalculator의 frame_idx 키 버그를 우회해 "frame_index"를 직접 참조.
+    landmarks_data["frames"]의 각 요소 = {"frame_index": int, "landmarks": [...]}
     """
-    n = len(frames)
-    if n < 10:
-        return {"address": None, "top_of_backswing": None}
-
-    window_size = max(int(fps * 0.5), 10)  # 0.5초 윈도우, 최소 10프레임
-    first_30_pct = max(int(n * 0.30), window_size + 1)
-
-    # ── 어드레스: 초반 30% 구간에서 손목 모션 최소 지점
-    address_pos: Optional[int] = None
-    min_motion = float("inf")
-    step = max(1, window_size // 4)
-
-    for center in range(window_size // 2, first_30_pct - window_size // 2, step):
-        motion = _calc_landmark_motion(frames, center, window_size, _WRIST_INDICES)
-        if motion < min_motion:
-            min_motion = motion
-            address_pos = center
-
-    if address_pos is None:
-        address_pos = min(int(n * 0.05), n - 1)
-
-    # ── 백스윙 탑: 어드레스 이후 50% 구간에서 X-Factor 최대 프레임
-    top_pos: Optional[int] = None
-    max_sep = -1.0
-    search_start = address_pos + window_size
-    search_end = min(n, search_start + int(n * 0.5))
-
-    for i in range(search_start, search_end):
-        sep = _hip_shoulder_separation_frame(frames[i].get("landmarks", []))
-        if sep is not None and sep > max_sep:
-            max_sep = sep
-            top_pos = i
-
-    logger.info(
-        f"  📍 페이즈 감지: address=frame[{address_pos}], "
-        f"top_of_backswing=frame[{top_pos}] (X-Factor {max_sep:.1f}°)"
-    )
-    return {"address": address_pos, "top_of_backswing": top_pos}
+    result: Dict[int, Dict[str, float]] = {}
+    for frame in frames:
+        frame_idx = frame.get("frame_index", 0)
+        landmarks = frame.get("landmarks", [])
+        angles = calc._calculate_frame_angles(landmarks)
+        if angles:
+            result[frame_idx] = angles
+    return result
 
 
-# ──────────────────────────────────────────────────────────────
-# 각도 추출
-# ──────────────────────────────────────────────────────────────
+def _to_phase_detector_input(
+    angles_per_frame: Dict[int, Dict[str, float]],
+    angle_names: List[str],
+) -> Dict[str, Any]:
+    """
+    { frame_idx: {angle_name: value} } → PhaseDetector 입력 형식으로 변환.
+
+    PhaseDetector 기대 형식:
+        {"angle_name": {"frames": {frame_idx: value, ...}, "average": float}}
+    """
+    result: Dict[str, Any] = {}
+    for angle_name in angle_names:
+        frames: Dict[int, float] = {}
+        values: List[float] = []
+        for frame_idx, angle_map in angles_per_frame.items():
+            if angle_name in angle_map:
+                frames[frame_idx] = angle_map[angle_name]
+                values.append(angle_map[angle_name])
+        if values:
+            result[angle_name] = {
+                "frames": frames,
+                "average": float(np.mean(values)),
+            }
+    return result
 
 
 def extract_angles_from_video(
     video_path: str,
     angle_config_flat: Dict,
+    phase_config: Optional[List] = None,
     phase_map: Optional[Dict[str, str]] = None,
-) -> Optional[Dict[str, float]]:
+) -> Tuple[Optional[Dict[str, float]], Optional[Dict]]:
     """
     영상에서 관절 각도를 추출.
 
-    phase_map이 있으면 각 각도를 지정된 스윙 페이즈 프레임에서 추출.
-    phase_map이 없으면 전체 프레임 평균 사용 (기존 동작).
+    phase_config + phase_map이 있으면 PhaseDetector로 스윙 페이즈를 감지한 후
+    각 각도의 지정 페이즈 start_frame에서 값을 추출.
+    없으면 전체 프레임 평균 사용 (fallback).
 
     Args:
-        phase_map: {"left_arm_angle": "top_of_backswing", "spine_angle": "address", ...}
+        phase_config: sports_config의 phases 리스트 (PhaseDetector 생성자 입력)
+        phase_map: {"left_arm_angle": "backswing_top", "spine_angle": "address", ...}
 
     Returns:
-        {"left_arm_angle": 168.3, ...} 또는 None (추출 실패 시)
+        (angles_dict, landmarks_data) — 실패 시 (None, None)
     """
     analyzer = _create_pose_analyzer()
     landmarks_data = analyzer.extract_landmarks(video_path)
+    frames = landmarks_data["frames"]
+    fps = landmarks_data.get("fps", 30.0)
     calc = AngleCalculator(angle_config=angle_config_flat)
 
-    # ── 페이즈 감지 없음: 전체 평균 (기존 동작)
-    if not phase_map:
+    if not phase_config or not phase_map:
+        # 전체 평균 fallback
         result = calc.calculate_angles(landmarks_data)
         average_angles = result.get("average_angles", {})
         if not average_angles:
             logger.warning("  ⚠️  각도 추출 결과 없음 (영상 품질 또는 포즈 감지 실패)")
-            return None
-        return average_angles
+            return None, None
+        return average_angles, landmarks_data
 
-    # ── 페이즈별 추출
-    frames = landmarks_data["frames"]
-    fps = landmarks_data.get("fps", 30.0)
-    phases = detect_swing_phases(frames, fps)
+    # ── PhaseDetector로 스윙 페이즈 감지
+    angles_per_frame = _build_angles_per_frame(frames, calc)
+    if not angles_per_frame:
+        logger.warning("  ⚠️  프레임 각도 추출 실패")
+        return None, None
 
+    phase_input = _to_phase_detector_input(
+        angles_per_frame, list(angle_config_flat.keys())
+    )
+    detector = PhaseDetector(phase_config, fps=int(fps))
+    detected_phases = detector.detect_phases(phase_input)
+
+    # phase_name → start_frame 맵
+    phase_start_frames = {p["name"]: p["start_frame"] for p in detected_phases}
+    logger.info(f"  📍 PhaseDetector 감지: {phase_start_frames}")
+
+    # ── 각 각도를 지정 페이즈 start_frame에서 추출
     angles: Dict[str, float] = {}
     for angle_name, phase_name in phase_map.items():
-        frame_pos = phases.get(phase_name)
-        if frame_pos is None or frame_pos >= len(frames):
-            # 페이즈 감지 실패 → 전체 평균 fallback
-            full_result = calc.calculate_angles(landmarks_data)
-            val = full_result.get("average_angles", {}).get(angle_name)
+        start_frame = phase_start_frames.get(phase_name)
+        if start_frame is None:
+            # 페이즈 미감지 → 해당 각도 전체 평균 fallback
+            all_vals = [
+                v[angle_name] for v in angles_per_frame.values() if angle_name in v
+            ]
+            if all_vals:
+                angles[angle_name] = float(np.mean(all_vals))
+                logger.warning(
+                    f"  ⚠️  '{phase_name}' 페이즈 미감지 → '{angle_name}' 전체 평균 사용"
+                )
         else:
-            # 해당 페이즈 단일 프레임에서 각도 계산
-            single = {
-                "frames": [frames[frame_pos]],
-                "total_frames": 1,
-                "valid_frames": 1,
-                "fps": fps,
-            }
-            val = (
-                calc.calculate_angles(single).get("average_angles", {}).get(angle_name)
-            )
-
-        if val is not None:
-            angles[angle_name] = val
+            val = angles_per_frame.get(start_frame, {}).get(angle_name)
+            if val is None:
+                # start_frame에 각도 없으면 인접 프레임 탐색
+                frame_keys = sorted(angles_per_frame.keys())
+                closest = min(
+                    frame_keys, key=lambda k: abs(k - start_frame), default=None
+                )  # noqa: B023
+                if closest is not None:
+                    val = angles_per_frame[closest].get(angle_name)
+            if val is not None:
+                angles[angle_name] = val
 
     if not angles:
         logger.warning("  ⚠️  각도 추출 결과 없음 (영상 품질 또는 포즈 감지 실패)")
-        return None
-    return angles
+        return None, None
+    return angles, landmarks_data
+
+
+def save_raw_landmarks(
+    url: str,
+    landmarks_data: Dict,
+    sport: str,
+    sub: str,
+    save_dir: str,
+    model_type: str = "heavy",
+) -> None:
+    """
+    3프레임 간격으로 샘플링한 랜드마크를 JSON으로 저장.
+
+    파일 경로: {save_dir}/{SPORT}_{SUB}/{YYYYMMDD}_{video_id}.json
+    """
+    import re
+
+    # URL에서 video ID 추출 (YouTube watch?v=XXXX 또는 youtu.be/XXXX)
+    match = re.search(r"(?:v=|youtu\.be/)([A-Za-z0-9_-]{11})", url)
+    video_id = match.group(1) if match else "unknown"
+
+    today = date.today().strftime("%Y%m%d")
+    subdir = os.path.join(save_dir, f"{sport}_{sub}")
+    os.makedirs(subdir, exist_ok=True)
+    output_path = os.path.join(subdir, f"{today}_{video_id}.json")
+
+    # 3프레임 간격 샘플링
+    all_frames = landmarks_data.get("frames", [])
+    sampled = [
+        frame
+        for i, frame in enumerate(all_frames)
+        if i % _LANDMARK_SAMPLE_INTERVAL == 0
+    ]
+
+    payload = {
+        "url": url,
+        "sport": sport,
+        "sub": sub,
+        "model_type": model_type,
+        "fps": landmarks_data.get("fps", 0),
+        "total_frames": landmarks_data.get("total_frames", 0),
+        "sampled_frames": len(sampled),
+        "sample_interval": _LANDMARK_SAMPLE_INTERVAL,
+        "collected_at": today,
+        "frames": sampled,
+    }
+
+    with open(output_path, "w", encoding="utf-8") as f:
+        json.dump(payload, f, ensure_ascii=False)
+
+    size_kb = os.path.getsize(output_path) / 1024
+    logger.info(
+        f"  💾 랜드마크 저장: {output_path} ({size_kb:.0f}KB, {len(sampled)}프레임)"
+    )
 
 
 def _flatten_angle_config(angle_config_raw: Dict) -> Dict:
@@ -739,6 +750,15 @@ def main() -> None:
         action="store_true",
         help="파일을 저장하지 않고 결과만 출력",
     )
+    parser.add_argument(
+        "--landmarks-dir",
+        default=None,
+        help=(
+            "Raw 랜드마크 JSON 저장 디렉토리 "
+            "(예: ../motionlab-config/calibration_data/raw_landmarks). "
+            "지정하지 않으면 저장 안 함."
+        ),
+    )
     args = parser.parse_args()
 
     # ── URL 읽기
@@ -752,21 +772,26 @@ def main() -> None:
     # ── 각도 config 로드
     raw_config = load_sports_config()
     try:
-        angle_config_raw = raw_config[args.sport]["sub_categories"][args.sub]["angles"]
+        sub_config = raw_config[args.sport]["sub_categories"][args.sub]
+        angle_config_raw = sub_config["angles"]
     except KeyError:
         logger.error(f"종목을 찾을 수 없습니다: {args.sport}/{args.sub}")
         sys.exit(1)
 
     angle_config_flat = _flatten_angle_config(angle_config_raw)
 
-    # 각도별 페이즈 맵 구성 (sports_config.json의 "phase" 필드)
-    phase_map = {
+    # 페이즈 config (PhaseDetector 입력) 및 각도별 페이즈 맵
+    phase_config: Optional[List] = sub_config.get("phases") or None
+    phase_map: Optional[Dict[str, str]] = {
         name: data["phase"]
         for name, data in angle_config_raw.items()
         if "phase" in data
-    }
-    if phase_map:
+    } or None
+
+    if phase_config and phase_map:
         logger.info(f"📍 페이즈 맵: { {k: v for k, v in phase_map.items()} }")
+    else:
+        logger.info("📍 페이즈 config 없음 → 전체 평균 모드")
     logger.info(f"📐 측정 각도: {list(angle_config_flat.keys())}\n")
 
     # ── 영상별 처리 (임시 디렉토리 자동 정리)
@@ -782,13 +807,25 @@ def main() -> None:
                 continue
 
             logger.info("  📥 다운로드 완료")
-            angles = extract_angles_from_video(
-                video_path, angle_config_flat, phase_map or None
+            angles, landmarks_data = extract_angles_from_video(
+                video_path, angle_config_flat, phase_config, phase_map
             )
 
             if angles:
                 logger.info(f"  📐 각도: { {k: f'{v}°' for k, v in angles.items()} }")
                 all_results.append(angles)
+
+            if landmarks_data and args.landmarks_dir:
+                model_type = "heavy" if Path(POSE_MODEL_PATH).exists() else "full"
+                save_raw_landmarks(
+                    url,
+                    landmarks_data,
+                    args.sport,
+                    args.sub,
+                    args.landmarks_dir,
+                    model_type,
+                )
+
             logger.info("")
 
     if not all_results:
@@ -807,7 +844,7 @@ def main() -> None:
         stats,
         angle_config_raw,
         args.url_file,
-        phase_map or None,
+        phase_map,
         args.dry_run,
     )
 

@@ -60,7 +60,7 @@
                   "weight": 0.17
                 }
               },
-              "phase": "top_of_backswing"
+              "phase": "backswing_top"
             },
             "right_arm_angle": {
               "points": [
@@ -110,7 +110,7 @@
                   "weight": 0.17
                 }
               },
-              "phase": "top_of_backswing"
+              "phase": "backswing_top"
             },
             "spine_angle": {
               "points": [
@@ -206,7 +206,7 @@
                   "weight": 0.16
                 }
               },
-              "phase": "top_of_backswing"
+              "phase": "backswing_top"
             },
             "left_knee_angle": {
               "points": [
@@ -417,7 +417,7 @@
                   "weight": 0.1667
                 }
               },
-              "phase": "top_of_backswing"
+              "phase": "backswing_top"
             },
             "right_arm_angle": {
               "points": [
@@ -467,7 +467,7 @@
                   "weight": 0.1667
                 }
               },
-              "phase": "top_of_backswing"
+              "phase": "backswing_top"
             },
             "spine_angle": {
               "points": [
@@ -563,7 +563,7 @@
                   "weight": 0.1667
                 }
               },
-              "phase": "top_of_backswing"
+              "phase": "backswing_top"
             },
             "left_knee_angle": {
               "points": [
