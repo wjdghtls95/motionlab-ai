@@ -36,9 +36,12 @@ sports_config.json의 기준값(mediapipe_center, std)을 실측값으로 업데
 """
 
 import argparse
+import csv as csv_module
 import json
 import logging
 import os
+import shutil
+import subprocess
 import sys
 import tempfile
 from datetime import date
@@ -564,7 +567,134 @@ def check_sanity(
 
 
 # ──────────────────────────────────────────────────────────────
-# sports_config.json 업데이트
+# CSV 파이프라인 (R-076)
+# ──────────────────────────────────────────────────────────────
+
+
+def _find_csv(sport: str, sub: str, config_repo: str) -> Optional[str]:
+    """v2.0 CSV 경로 반환. 파일이 없으면 None."""
+    sport_lower = sport.lower()
+    sub_lower = sub.lower()
+    csv_path = (
+        Path(config_repo)
+        / "calibration_data"
+        / "v2.0"
+        / sport_lower
+        / f"{sport_lower}_{sub_lower}_standards.csv"
+    )
+    return str(csv_path) if csv_path.exists() else None
+
+
+def _update_csv_measured(
+    csv_path: str,
+    stats: Dict[str, Dict],
+    dry_run: bool,
+) -> int:
+    """
+    CSV의 measured_* 컬럼을 실측값으로 업데이트.
+
+    Returns:
+        업데이트된 각도 수
+    """
+    today = date.today().isoformat()
+    measured_cols = ["measured_value", "measured_std", "measured_n", "measured_at"]
+
+    rows: List[Dict] = []
+    with open(csv_path, "r", encoding="utf-8") as f:
+        reader = csv_module.DictReader(f)
+        fieldnames: List[str] = list(reader.fieldnames or [])
+        rows = list(reader)
+
+    # measured 컬럼이 없으면 헤더에 추가
+    for col in measured_cols:
+        if col not in fieldnames:
+            fieldnames.append(col)
+
+    updated = 0
+    for row in rows:
+        angle_name = row["angle_name"]
+        stat = stats.get(angle_name)
+        if stat is None:
+            continue
+        if stat["n"] < MIN_SAMPLES:
+            logger.warning(
+                f"  ⏭️  {angle_name}: 샘플 부족 (n={stat['n']} < {MIN_SAMPLES}) → CSV 미갱신"
+            )
+            continue
+        row["measured_value"] = f"{stat['mean']:.2f}"
+        row["measured_std"] = f"{stat['std']:.2f}"
+        row["measured_n"] = str(stat["n"])
+        row["measured_at"] = today
+        updated += 1
+        logger.info(
+            f"  ✅ {angle_name}: {stat['mean']:.1f}° ± {stat['std']:.1f}° (n={stat['n']})"
+        )
+
+    if dry_run:
+        logger.info(f"[dry-run] CSV {updated}개 행 업데이트 예정 — 파일 저장 안 함")
+        return updated
+
+    with open(csv_path, "w", encoding="utf-8", newline="") as f:
+        writer = csv_module.DictWriter(f, fieldnames=fieldnames)
+        writer.writeheader()
+        writer.writerows(rows)
+
+    logger.info(f"  💾 CSV 저장: {csv_path} ({updated}개 각도 갱신)")
+    return updated
+
+
+def _run_csv_to_config(
+    config_repo: str,
+    ai_config_path: str,
+    dry_run: bool,
+) -> None:
+    """
+    csv_to_config.py 실행 후 output/latest/sports_config.json을
+    motionlab-ai/core/sport_configs/sports_config.json으로 복사.
+    """
+    csv_to_config_script = Path(config_repo) / "scripts" / "csv_to_config.py"
+    output_latest = Path(config_repo) / "output" / "latest" / "sports_config.json"
+
+    if dry_run:
+        logger.info(
+            f"[dry-run] csv_to_config.py 실행 예정 → {ai_config_path} 복사 예정"
+        )
+        return
+
+    logger.info("🔄 csv_to_config.py 실행 중...")
+    result = subprocess.run(
+        [
+            sys.executable,
+            str(csv_to_config_script),
+            "--version",
+            "v2.0",
+            "--bump",
+            "patch",
+            "--changelog",
+            "collect_calibration.py 실측값 자동 업데이트",
+            "--storage",
+            "local",
+        ],
+        cwd=config_repo,
+        capture_output=True,
+        text=True,
+    )
+
+    if result.returncode != 0:
+        logger.error(f"csv_to_config.py 실패:\n{result.stderr}")
+        return
+
+    logger.info("✅ csv_to_config.py 완료")
+
+    if not output_latest.exists():
+        logger.error(f"출력 파일 없음: {output_latest}")
+        return
+
+    shutil.copy2(str(output_latest), ai_config_path)
+    logger.info(f"✅ sports_config.json 복사: {output_latest} → {ai_config_path}")
+
+
+# sports_config.json 직접 업데이트 (레거시 — v2.0 CSV 없는 종목용)
 # ──────────────────────────────────────────────────────────────
 
 
@@ -729,7 +859,7 @@ def update_sports_config(
 
 def main() -> None:
     parser = argparse.ArgumentParser(
-        description="YouTube URL → MediaPipe 각도 측정 → sports_config.json 업데이트"
+        description="YouTube URL → MediaPipe 각도 측정 → CSV 저장 → sports_config.json 생성"
     )
     parser.add_argument(
         "--url-file",
@@ -758,6 +888,11 @@ def main() -> None:
             "(예: ../motionlab-config/calibration_data/raw_landmarks). "
             "지정하지 않으면 저장 안 함."
         ),
+    )
+    parser.add_argument(
+        "--config-repo",
+        default=str(Path(__file__).parent.parent.parent / "motionlab-config"),
+        help="motionlab-config 레포 경로 (기본: ../motionlab-config)",
     )
     args = parser.parse_args()
 
@@ -836,17 +971,31 @@ def main() -> None:
     logger.info(f"📊 통계 계산 — {len(all_results)}개 영상 기준")
     stats = compute_statistics(all_results)
 
-    # ── sports_config.json 업데이트
-    update_sports_config(
-        args.output,
-        args.sport,
-        args.sub,
-        stats,
-        angle_config_raw,
-        args.url_file,
-        phase_map,
-        args.dry_run,
-    )
+    # ── CSV 파이프라인 (R-076)
+    csv_path = _find_csv(args.sport, args.sub, args.config_repo)
+    if csv_path:
+        logger.info(f"\n📄 CSV 파이프라인 모드: {csv_path}")
+        updated = _update_csv_measured(csv_path, stats, args.dry_run)
+        if updated > 0:
+            _run_csv_to_config(args.config_repo, args.output, args.dry_run)
+        else:
+            logger.warning("업데이트된 각도가 없어 csv_to_config.py 실행 건너뜀")
+    else:
+        logger.warning(
+            f"⚠️  v2.0 CSV 없음 ({args.sport}/{args.sub}) "
+            f"→ sports_config.json 직접 업데이트 (레거시 모드)\n"
+            f"   CSV 생성 후 다시 실행하면 CSV 파이프라인으로 전환됩니다."
+        )
+        update_sports_config(
+            args.output,
+            args.sport,
+            args.sub,
+            stats,
+            angle_config_raw,
+            args.url_file,
+            phase_map,
+            args.dry_run,
+        )
 
 
 if __name__ == "__main__":
