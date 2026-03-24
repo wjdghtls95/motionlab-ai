@@ -64,7 +64,7 @@ def mock_landmarks_data(num_frames=150, num_landmarks=33):
                     "visibility": round(rng.uniform(0.8, 1.0), 4),
                 }
             )
-        frames.append({"frame_idx": i, "landmarks": landmarks})
+        frames.append({"frame_index": i, "landmarks": landmarks})
     return {
         "frames": frames,
         "total_frames": num_frames,
