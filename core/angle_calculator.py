@@ -79,7 +79,7 @@ class AngleCalculator:
         angle_values: Dict[str, List[float]] = {name: [] for name in self.angle_config}
 
         for frame in frames:
-            frame_idx = frame.get("frame_idx", 0)
+            frame_idx = frame.get("frame_index", 0)
             landmarks = frame.get("landmarks", [])
 
             angles = self._calculate_frame_angles(landmarks)

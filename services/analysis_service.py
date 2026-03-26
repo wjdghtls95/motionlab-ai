@@ -12,6 +12,7 @@ from core.sport_configs.base_config import UserLevel
 from core.constants import PipelineConfig, LLMConfig
 from core.motion_validator import MotionValidator
 from models import AnalysisResponse, AnalysisResult, PhaseInfo
+from utils.angle_utils import to_phase_input
 from utils.decorators import measure_time, log_execution
 from utils.response_builder import extract_keypoints_sample
 from utils.timer import StepTimer
@@ -104,7 +105,9 @@ class AnalysisService:
                     phase_config=sport_config["phases"],
                     fps=metadata["fps"],
                 )
-                phases = phase_detector.detect_phases(angles_data)
+                phases = phase_detector.detect_phases(
+                    to_phase_input(angles_data["frame_angles"])
+                )
             logger.info(f"✅ {len(phases)}개 구간: {[p['name'] for p in phases]}")
 
             # ========== 종목-영상 검증 ==========
