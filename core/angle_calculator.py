@@ -131,6 +131,8 @@ class AngleCalculator:
         phase_angles: Dict[str, float] = {}
         undetected_phases: List[str] = []
 
+        logger.info("── 페이즈별 각도 측정 시작 ──")
+
         for angle_name, angle_def in self.angle_config.items():
             target_phase = angle_def.get("phase")
             if not target_phase:
@@ -140,6 +142,7 @@ class AngleCalculator:
             if target_phase not in phase_map:
                 if target_phase not in undetected_phases:
                     undetected_phases.append(target_phase)
+                logger.info(f"  [{angle_name}] phase={target_phase} → 미감지 (제외)")
                 continue
 
             detected = phase_map[target_phase]
@@ -153,16 +156,40 @@ class AngleCalculator:
             ]
 
             if values:
-                phase_angles[angle_name] = round(float(np.mean(values)), 1)
+                avg = round(float(np.mean(values)), 1)
+                phase_angles[angle_name] = avg
+                ideal = angle_def.get(
+                    "ideal_range", [AngleDefaults.RANGE_MIN, AngleDefaults.RANGE_MAX]
+                )
+                in_range = ideal[0] <= avg <= ideal[1]
+                logger.info(
+                    f"  [{angle_name}] phase={target_phase} "
+                    f"frames={start}~{end} ({len(values)}개) "
+                    f"→ {avg}° | ideal={ideal} | "
+                    f"{'✅ IDEAL' if in_range else '❌ OUT'}"
+                )
+            else:
+                logger.info(
+                    f"  [{angle_name}] phase={target_phase} "
+                    f"frames={start}~{end} → 해당 구간 데이터 없음 (제외)"
+                )
 
         phase_scores = self._calculate_scores(phase_angles)
         overall_score = self._calculate_weighted_score(phase_scores)
         diagnosis = self._determine_diagnosis(phase_angles)
 
+        logger.info("── 페이즈별 점수 결과 ──")
+        score_labels = {90: "IDEAL", 70: "CAUTION", 40: "CORRECTION", 50: "NO_DATA"}
+        for angle_name, score in phase_scores.items():
+            diag = diagnosis.get(angle_name)
+            label = score_labels.get(score, str(score))
+            logger.info(
+                f"  [{angle_name}] {score}점 ({label})"
+                + (f" → 진단: {diag}" if diag else "")
+            )
+
         logger.info(
-            f"페이즈별 점수 계산 완료: {len(phase_angles)}개 각도, "
-            f"전체점수={overall_score}, "
-            f"미감지 페이즈={undetected_phases}"
+            f"── 전체점수={overall_score}, 미감지 페이즈={undetected_phases} ──"
         )
 
         return {
