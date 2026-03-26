@@ -19,13 +19,11 @@
 """
 
 import numpy as np
-import logging
 from typing import Dict, List, Optional, Any, Callable
 
 from core.constants import FeedbackScore, AngleDefaults
 from core.landmarks import get_landmark_index
-
-logger = logging.getLogger(__name__)
+from utils.logger import logger
 
 
 class AngleCalculator:
