@@ -28,7 +28,7 @@ class FeedbackThreshold:
 class PipelineConfig:
     """분석 파이프라인 설정"""
 
-    TOTAL_STEPS = 8  # 파이프라인 전체 단계 수
+    TOTAL_STEPS = 9  # 파이프라인 전체 단계 수 (페이즈 점수 단계 추가)
     MIN_VISIBILITY = 0.5  # MediaPipe 랜드마크 최소 신뢰도
     MIN_VALID_FRAME_RATIO = 0.1  # 최소 유효 프레임 비율 (10%)
     MIN_VIDEO_DURATION = 1.0  # 최소 영상 길이 (초)

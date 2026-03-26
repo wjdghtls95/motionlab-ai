@@ -11,7 +11,8 @@
 호출 흐름:
   analysis_service.py
     → AngleCalculator(angle_config=sport_config["angles"])
-    → calculate_angles(landmarks_data)
+    → calculate_angles(landmarks_data)         # 프레임 각도 + 평균만 반환
+    → calculate_phase_scores(frame_angles, detected_phases)  # 페이즈별 점수 계산
     → _calculate_frame_angles(landmarks)
     → _calculate_angle_from_points() 또는 _special_calculators[name]()
     → core/landmarks.py :: get_landmark_index()
@@ -53,29 +54,23 @@ class AngleCalculator:
 
     def calculate_angles(self, landmarks_data: Dict) -> Dict:
         """
-        전체 프레임 각도 계산 + 평균 각도 + 점수 반환
+        전체 프레임 각도 계산 + 평균 각도 반환.
+
+        점수 계산은 calculate_phase_scores()가 담당.
+        페이즈 감지 전에 호출되므로 여기서는 프레임 데이터만 반환.
 
         Returns:
         {
-            "frame_angles": [...],
-            "average_angles": {"left_arm_angle": 168.7, ...},
-            "angle_scores": {"left_arm_angle": 90, ...},
-            "weighted_score": 73.5
+            "frame_angles": [{"frame_idx": N, "angles": {...}}, ...],
+            "average_angles": {"left_arm_angle": 168.7, ...}
         }
         """
         frames = landmarks_data.get("frames", [])
         if not frames:
             logger.warning("프레임 데이터 없음")
-
-            return {
-                "frame_angles": [],
-                "average_angles": {},
-                "angle_scores": {},
-                "weighted_score": FeedbackScore.DEFAULT,
-            }
+            return {"frame_angles": [], "average_angles": {}}
 
         frame_angles_list = []
-        # 각도별 값 수집 (평균 계산용)
         angle_values: Dict[str, List[float]] = {name: [] for name in self.angle_config}
 
         for frame in frames:
@@ -88,14 +83,10 @@ class AngleCalculator:
                 for name, value in angles.items():
                     angle_values[name].append(value)
 
-        # 평균 각도 계산
         average_angles = {}
         for name, values in angle_values.items():
             if values:
                 average_angles[name] = round(float(np.mean(values)), 1)
-
-        angle_scores = self._calculate_scores(average_angles)
-        weighted_score = self._calculate_weighted_score(angle_scores)
 
         logger.info(
             f"각도 계산 완료: {len(frame_angles_list)}/{len(frames)} 프레임 성공"
@@ -104,38 +95,109 @@ class AngleCalculator:
         return {
             "frame_angles": frame_angles_list,
             "average_angles": average_angles,
-            "angle_scores": angle_scores,
-            "weighted_score": weighted_score,
         }
 
-    def _calculate_scores(self, average_angles: Dict[str, float]) -> Dict[str, int]:
+    def calculate_phase_scores(
+        self,
+        frame_angles: List[Dict],
+        detected_phases: List[Dict],
+    ) -> Dict:
         """
-        각 각도의 평균값이 ideal_range 안에 있는지 판단해서 점수 부여
+        페이즈별 각도 점수 계산.
+
+        각 angle의 config.phase 필드로 해당 페이즈 구간을 특정하고,
+        그 구간 프레임의 평균 각도를 ideal_range와 비교해 점수 결정.
+        페이즈 미감지 시 해당 angle 제외 (옵션 B).
+
+        Args:
+            frame_angles: calculate_angles()["frame_angles"]
+            detected_phases: PhaseDetector.detect_phases() 결과
+                [{"name": "backswing_top", "start_frame": N, "end_frame": M}, ...]
+
+        Returns:
+        {
+            "phase_angles": {"left_arm_angle": 172.3, ...},
+            "phase_scores": {"left_arm_angle": 90, ...},
+            "overall_score": 87.5,
+            "diagnosis": {"left_arm_angle": None, "right_arm_angle": "트레일팔 과다 접힘", ...},
+            "undetected_phases": ["impact"]
+        }
+        """
+        phase_map: Dict[str, Dict] = {p["name"]: p for p in detected_phases}
+        frame_map: Dict[int, Dict[str, float]] = {
+            f["frame_idx"]: f["angles"] for f in frame_angles
+        }
+
+        phase_angles: Dict[str, float] = {}
+        undetected_phases: List[str] = []
+
+        for angle_name, angle_def in self.angle_config.items():
+            target_phase = angle_def.get("phase")
+            if not target_phase:
+                # phase 필드 없는 angle은 건너뜀 (WEDGE/PUTTER/WEIGHT 2단계 이후 처리)
+                continue
+
+            if target_phase not in phase_map:
+                if target_phase not in undetected_phases:
+                    undetected_phases.append(target_phase)
+                continue
+
+            detected = phase_map[target_phase]
+            start = detected["start_frame"]
+            end = detected["end_frame"]
+
+            values = [
+                frame_map[idx][angle_name]
+                for idx in range(start, end + 1)
+                if idx in frame_map and angle_name in frame_map[idx]
+            ]
+
+            if values:
+                phase_angles[angle_name] = round(float(np.mean(values)), 1)
+
+        phase_scores = self._calculate_scores(phase_angles)
+        overall_score = self._calculate_weighted_score(phase_scores)
+        diagnosis = self._determine_diagnosis(phase_angles)
+
+        logger.info(
+            f"페이즈별 점수 계산 완료: {len(phase_angles)}개 각도, "
+            f"전체점수={overall_score}, "
+            f"미감지 페이즈={undetected_phases}"
+        )
+
+        return {
+            "phase_angles": phase_angles,
+            "phase_scores": phase_scores,
+            "overall_score": overall_score,
+            "diagnosis": diagnosis,
+            "undetected_phases": undetected_phases,
+        }
+
+    def _calculate_scores(self, angles: Dict[str, float]) -> Dict[str, int]:
+        """
+        입력된 각도값이 ideal_range 안에 있는지 판단해서 점수 부여.
+
+        입력에 있는 각도만 채점한다 (없는 각도는 결과에 포함하지 않음).
 
         - ideal_range 안 → IDEAL (90점)
         - angle_validation 안 → CAUTION (70점)
         - 둘 다 밖 → CORRECTION (40점)
-        - 데이터 없음 → NO_DATA (50점)
         """
         scores = {}
 
-        for angle_name, angle_def in self.angle_config.items():
-            value = average_angles.get(angle_name)
-
+        for angle_name, value in angles.items():
             if value is None:
-                scores[angle_name] = FeedbackScore.NO_DATA
                 continue
 
+            angle_def = self.angle_config.get(angle_name, {})
             ideal = angle_def.get(
                 "ideal_range", [AngleDefaults.RANGE_MIN, AngleDefaults.RANGE_MAX]
             )
 
-            # ideal_range 안이면 최고 점수
             if ideal[0] <= value <= ideal[1]:
                 scores[angle_name] = FeedbackScore.IDEAL
                 continue
 
-            # angle_validation (정상 범위) 안이면 주의
             validation = angle_def.get("angle_validation")
             if validation:
                 v_min = validation.get("min_normal", AngleDefaults.RANGE_MIN)
@@ -144,10 +206,35 @@ class AngleCalculator:
                     scores[angle_name] = FeedbackScore.CAUTION
                     continue
 
-            # 둘 다 밖이면 교정
             scores[angle_name] = FeedbackScore.CORRECTION
 
         return scores
+
+    def _determine_diagnosis(
+        self, phase_angles: Dict[str, float]
+    ) -> Dict[str, Optional[str]]:
+        """
+        각도값이 ideal_range 기준으로 낮으면 diagnosis_low, 높으면 diagnosis_high.
+        ideal_range 안이거나 값 없으면 None.
+        """
+        diagnosis: Dict[str, Optional[str]] = {}
+        for angle_name, angle_def in self.angle_config.items():
+            value = phase_angles.get(angle_name)
+            if value is None:
+                diagnosis[angle_name] = None
+                continue
+
+            ideal = angle_def.get(
+                "ideal_range", [AngleDefaults.RANGE_MIN, AngleDefaults.RANGE_MAX]
+            )
+            if value < ideal[0]:
+                diagnosis[angle_name] = angle_def.get("diagnosis_low")
+            elif value > ideal[1]:
+                diagnosis[angle_name] = angle_def.get("diagnosis_high")
+            else:
+                diagnosis[angle_name] = None
+
+        return diagnosis
 
     def _calculate_weighted_score(self, angle_scores: Dict[str, int]) -> float:
         """

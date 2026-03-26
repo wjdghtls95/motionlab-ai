@@ -53,8 +53,10 @@ class LLMFeedback:
         phases: List[Dict[str, Any]],
         sport_config: Dict[str, Any] = None,
         level: UserLevel = UserLevel.INTERMEDIATE,
-        angle_scores: Optional[Dict[str, int]] = None,
-        weighted_score: Optional[float] = None,
+        phase_angles: Optional[Dict[str, float]] = None,
+        phase_scores: Optional[Dict[str, int]] = None,
+        diagnosis: Optional[Dict[str, Optional[str]]] = None,
+        overall_score: Optional[float] = None,
     ) -> Dict[str, Any]:
         """
         LLM 피드백 생성
@@ -62,36 +64,41 @@ class LLMFeedback:
         Args:
             sport_type: 종목 (GOLF, WEIGHT)
             sub_category: 세부 종목 (DRIVER, SQUAT)
-            angles: 평균 각도 {"left_arm_angle": 165.3, ...}
+            angles: 평균 각도 — fallback용 (phase_angles가 없을 때 사용)
             phases: 감지된 구간 [{"name": "backswing", ...}, ...]
             sport_config: 스포츠 설정 (angles, phases 포함)
             level: 사용자 레벨
-            angle_scores: AngleCalculator가 계산한 각도별 점수
-            weighted_score: AngleCalculator가 계산한 가중 평균 점수
+            phase_angles: 페이즈별 각도 {"left_arm_angle": 172.3, ...}
+            phase_scores: 페이즈별 점수 {"left_arm_angle": 90, ...}
+            diagnosis: 진단 라벨 {"left_arm_angle": None, "right_arm_angle": "트레일팔 과다 접힘", ...}
+            overall_score: 가중 평균 전체 점수
         """
+        # 프롬프트에는 phase_angles 우선, 없으면 average_angles fallback
+        effective_angles = phase_angles if phase_angles else angles
 
         if self.noop_mode:
             logger.info(f"🔄 NOOP 모드: 규칙 기반 피드백 생성 (level={level.value})")
             return self._generate_rule_based_feedback(
                 sport_type=sport_type,
                 sub_category=sub_category,
-                angles=angles,
+                angles=effective_angles,
                 phases=phases,
                 sport_config=sport_config,
                 level=level,
-                angle_scores=angle_scores,
-                weighted_score=weighted_score,
+                angle_scores=phase_scores,
+                weighted_score=overall_score,
             )
 
         try:
             messages = self._build_prompt(
                 sport_type,
                 sub_category,
-                angles,
+                effective_angles,
                 phases,
                 sport_config,
                 level,
-                weighted_score,
+                overall_score,
+                diagnosis,
             )
 
             logger.info(
@@ -157,9 +164,10 @@ class LLMFeedback:
         phases: List[Dict[str, Any]],
         sport_config: Dict[str, Any] = None,
         level: UserLevel = UserLevel.INTERMEDIATE,
-        weighted_score: Optional[float] = None,
+        overall_score: Optional[float] = None,
+        diagnosis: Optional[Dict[str, Optional[str]]] = None,
     ) -> Dict[str, str]:
-        """프롬프트 구성 — 레벨 톤 + weighted_score 포함"""
+        """프롬프트 구성 — 레벨 톤 + overall_score + 진단 라벨 포함"""
         angle_configs = sport_config.get("angles", {}) if sport_config else {}
 
         angles_list = []
@@ -173,6 +181,9 @@ class LLMFeedback:
                 angle_data["description"] = angle_configs[name].get("description", "")
                 if "weight" in angle_configs[name]:
                     angle_data["weight"] = angle_configs[name]["weight"]
+            # 진단 라벨 포함 (있을 때만)
+            if diagnosis and name in diagnosis and diagnosis[name]:
+                angle_data["diagnosis"] = diagnosis[name]
             angles_list.append(angle_data)
 
         # 레벨별 톤 조회
@@ -186,7 +197,7 @@ class LLMFeedback:
                 "phases": phases,
                 "level": level.value,
                 "level_tone": tone,
-                "weighted_score": weighted_score,
+                "weighted_score": overall_score,
             },
         )
 

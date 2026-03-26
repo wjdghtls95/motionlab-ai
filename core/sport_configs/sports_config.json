@@ -60,7 +60,9 @@
                   "weight": 0.17
                 }
               },
-              "phase": "backswing_top"
+              "phase": "backswing_top",
+              "diagnosis_low": "오버스윙",
+              "diagnosis_high": "언더스윙"
             },
             "right_arm_angle": {
               "points": [
@@ -110,7 +112,9 @@
                   "weight": 0.17
                 }
               },
-              "phase": "backswing_top"
+              "phase": "backswing_top",
+              "diagnosis_low": "트레일팔 과다 접힘",
+              "diagnosis_high": "트레일팔 미접힘"
             },
             "spine_angle": {
               "points": [
@@ -160,7 +164,9 @@
                   "weight": 0.17
                 }
               },
-              "phase": "address"
+              "phase": "address",
+              "diagnosis_low": "과도한 앞 숙임",
+              "diagnosis_high": "과도한 뒤 기울기"
             },
             "hip_shoulder_separation": {
               "points": null,
@@ -206,7 +212,9 @@
                   "weight": 0.16
                 }
               },
-              "phase": "backswing_top"
+              "phase": "backswing_top",
+              "diagnosis_low": "X-Factor 부족",
+              "diagnosis_high": "X-Factor 과다"
             },
             "left_knee_angle": {
               "points": [
@@ -256,7 +264,9 @@
                   "weight": 0.17
                 }
               },
-              "phase": "address"
+              "phase": "address",
+              "diagnosis_low": "과도한 무릎 굽힘",
+              "diagnosis_high": "무릎 과신전"
             },
             "right_knee_angle": {
               "points": [
@@ -306,7 +316,9 @@
                   "weight": 0.16
                 }
               },
-              "phase": "address"
+              "phase": "address",
+              "diagnosis_low": "과도한 무릎 굽힘",
+              "diagnosis_high": "무릎 과신전"
             }
           },
           "phases": [
@@ -417,7 +429,9 @@
                   "weight": 0.1667
                 }
               },
-              "phase": "backswing_top"
+              "phase": "backswing_top",
+              "diagnosis_low": "오버스윙",
+              "diagnosis_high": "언더스윙"
             },
             "right_arm_angle": {
               "points": [
@@ -467,7 +481,9 @@
                   "weight": 0.1667
                 }
               },
-              "phase": "backswing_top"
+              "phase": "backswing_top",
+              "diagnosis_low": "트레일팔 과다 접힘",
+              "diagnosis_high": "트레일팔 미접힘"
             },
             "spine_angle": {
               "points": [
@@ -517,7 +533,9 @@
                   "weight": 0.1667
                 }
               },
-              "phase": "address"
+              "phase": "address",
+              "diagnosis_low": "과도한 앞 숙임",
+              "diagnosis_high": "과도한 뒤 기울기"
             },
             "hip_shoulder_separation": {
               "points": null,
@@ -563,7 +581,9 @@
                   "weight": 0.1667
                 }
               },
-              "phase": "backswing_top"
+              "phase": "backswing_top",
+              "diagnosis_low": "X-Factor 부족",
+              "diagnosis_high": "X-Factor 과다"
             },
             "left_knee_angle": {
               "points": [
@@ -613,7 +633,9 @@
                   "weight": 0.1667
                 }
               },
-              "phase": "address"
+              "phase": "address",
+              "diagnosis_low": "과도한 무릎 굽힘",
+              "diagnosis_high": "무릎 과신전"
             },
             "right_knee_angle": {
               "points": [
@@ -663,7 +685,9 @@
                   "weight": 0.1667
                 }
               },
-              "phase": "address"
+              "phase": "address",
+              "diagnosis_low": "과도한 무릎 굽힘",
+              "diagnosis_high": "무릎 과신전"
             }
           },
           "phases": [

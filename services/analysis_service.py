@@ -90,7 +90,7 @@ class AnalysisService:
             with timer.next_step(total, "Config 로드"):
                 sport_config = get_sport_config(sport_type, sub_category, level=level)
 
-            # ========== 각도 계산 ==========
+            # ========== 각도 계산 (프레임 데이터만) ==========
             with timer.next_step(total, "각도 계산"):
                 angle_calculator = AngleCalculator(
                     angle_config=sport_config["angles"],
@@ -109,6 +109,17 @@ class AnalysisService:
                     to_phase_input(angles_data["frame_angles"])
                 )
             logger.info(f"✅ {len(phases)}개 구간: {[p['name'] for p in phases]}")
+
+            # ========== 페이즈별 점수 계산 ==========
+            with timer.next_step(total, "페이즈 점수"):
+                phase_scoring = angle_calculator.calculate_phase_scores(
+                    frame_angles=angles_data["frame_angles"],
+                    detected_phases=phases,
+                )
+            logger.info(
+                f"✅ 페이즈 점수: {phase_scoring['overall_score']}, "
+                f"미감지={phase_scoring['undetected_phases']}"
+            )
 
             # ========== 종목-영상 검증 ==========
             with timer.next_step(total, "종목 검증"):
@@ -136,20 +147,27 @@ class AnalysisService:
                     phases=phases,
                     sport_config=sport_config,
                     level=level,
-                    angle_scores=angles_data.get("angle_scores", {}),
-                    weighted_score=angles_data.get("weighted_score"),
+                    phase_angles=phase_scoring["phase_angles"],
+                    phase_scores=phase_scoring["phase_scores"],
+                    diagnosis=phase_scoring["diagnosis"],
+                    overall_score=phase_scoring["overall_score"],
                 )
 
             timer.summary(motion_id)
 
             # ========== 응답 생성 ==========
+            # phase_angles가 있으면 우선 사용, 없으면 average_angles fallback
+            result_angles = (
+                phase_scoring["phase_angles"] or angles_data["average_angles"]
+            )
+
             return AnalysisResponse(
                 success=True,
                 motion_id=motion_id,
                 result=AnalysisResult(
                     total_frames=landmarks_data["total_frames"],
                     duration_seconds=metadata["duration_seconds"],
-                    angles=angles_data["average_angles"],
+                    angles=result_angles,
                     phases=[PhaseInfo(**phase) for phase in phases],
                     keypoints_sample=extract_keypoints_sample(landmarks_data),
                 ),
