@@ -18,12 +18,20 @@
     → core/landmarks.py :: get_landmark_index()
 """
 
+import copy
 import numpy as np
+from scipy.signal import savgol_filter
 from typing import Dict, List, Optional, Any, Callable
 
 from core.constants import FeedbackScore, AngleDefaults
 from core.landmarks import get_landmark_index
 from utils.logger import logger
+
+# 스무딩 파라미터 — 프레임 단위 노이즈 제거용
+_SMOOTH_WINDOW = 5  # 홀수, 최소 polyorder+1
+_SMOOTH_POLYORDER = 2  # 다항식 차수
+# Phase window 확장 — keyframe 경계 ±N프레임
+_PHASE_WINDOW_MARGIN = 5
 
 
 class AngleCalculator:
@@ -68,10 +76,13 @@ class AngleCalculator:
             logger.warning("프레임 데이터 없음")
             return {"frame_angles": [], "average_angles": {}}
 
+        # 랜드마크 좌표 스무딩 — 프레임 단위 노이즈 제거 후 각도 계산
+        smoothed_frames = self._smooth_landmarks(frames)
+
         frame_angles_list = []
         angle_values: Dict[str, List[float]] = {name: [] for name in self.angle_config}
 
-        for frame in frames:
+        for frame in smoothed_frames:
             frame_idx = frame.get("frame_index", 0)
             landmarks = frame.get("landmarks", [])
 
@@ -144,8 +155,10 @@ class AngleCalculator:
                 continue
 
             detected = phase_map[target_phase]
-            start = detected["start_frame"]
-            end = detected["end_frame"]
+            # ±PHASE_WINDOW_MARGIN 프레임 확장 — 페이즈 경계 흔들림 흡수
+            # 예: start=42, end=45 → range(37, 51) = 14프레임
+            start = max(0, detected["start_frame"] - _PHASE_WINDOW_MARGIN)
+            end = detected["end_frame"] + _PHASE_WINDOW_MARGIN
 
             values = [
                 frame_map[idx][angle_name]
@@ -286,6 +299,52 @@ class AngleCalculator:
         # 자동 정규화: total_weight로 나눔
         result = weighted_sum / total_weight
         return round(result, 1)
+
+    # ========== 스무딩 ==========
+    def _smooth_landmarks(self, frames: List[Dict]) -> List[Dict]:
+        """
+        savgol_filter로 랜드마크 x/y 좌표의 프레임 단위 노이즈 제거.
+
+        프레임 수가 window_length보다 적으면 스무딩 생략 (원본 반환).
+
+        Args:
+            frames: landmarks_data["frames"] — 프레임 리스트
+        Returns:
+            스무딩된 좌표가 적용된 frames (원본 구조 유지)
+        """
+        if len(frames) < _SMOOTH_WINDOW:
+            return frames
+
+        landmark_count = len(frames[0].get("landmarks", []))
+        if landmark_count == 0:
+            return frames
+
+        # landmark별로 x/y 시계열 추출 → filter → 교체
+        # shape: (num_landmarks, num_frames)
+        xs = np.array(
+            [[f["landmarks"][i]["x"] for f in frames] for i in range(landmark_count)],
+            dtype=float,
+        )
+        ys = np.array(
+            [[f["landmarks"][i]["y"] for f in frames] for i in range(landmark_count)],
+            dtype=float,
+        )
+
+        smoothed_xs = savgol_filter(
+            xs, window_length=_SMOOTH_WINDOW, polyorder=_SMOOTH_POLYORDER, axis=1
+        )
+        smoothed_ys = savgol_filter(
+            ys, window_length=_SMOOTH_WINDOW, polyorder=_SMOOTH_POLYORDER, axis=1
+        )
+
+        # 원본 frames를 복사하고 x/y만 교체
+        smoothed_frames = copy.deepcopy(frames)
+        for frame_idx, frame in enumerate(smoothed_frames):
+            for lm_idx, lm in enumerate(frame["landmarks"]):
+                lm["x"] = float(smoothed_xs[lm_idx, frame_idx])
+                lm["y"] = float(smoothed_ys[lm_idx, frame_idx])
+
+        return smoothed_frames
 
     # ========== 프레임 단위 계산 ==========
     def _calculate_frame_angles(
