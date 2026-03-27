@@ -93,12 +93,28 @@ def mock_angles_data():
             "right_arm_angle": 85.3,
             "spine_angle": 170.2,
         },
-        "angle_scores": {
+    }
+
+
+def mock_phase_scoring_data():
+    return {
+        "phase_angles": {
+            "left_arm_angle": 172.3,
+            "right_arm_angle": 85.3,
+            "spine_angle": 170.2,
+        },
+        "phase_scores": {
             "left_arm_angle": 90,
             "right_arm_angle": 70,
             "spine_angle": 90,
         },
-        "weighted_score": 83.3,
+        "overall_score": 83.3,
+        "diagnosis": {
+            "left_arm_angle": None,
+            "right_arm_angle": None,
+            "spine_angle": None,
+        },
+        "undetected_phases": [],
     }
 
 
@@ -173,6 +189,7 @@ def e2e_mocks(func):
         # --- AngleCalculator mock ---
         mock_ac_instance = MagicMock()
         mock_ac_instance.calculate_angles.return_value = mock_angles_data()
+        mock_ac_instance.calculate_phase_scores.return_value = mock_phase_scoring_data()
         mock_ac_cls = MagicMock(return_value=mock_ac_instance)
 
         # --- PhaseDetector mock ---
