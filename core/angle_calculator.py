@@ -478,4 +478,6 @@ class AngleCalculator:
         hip_angle = np.degrees(np.arctan2(rh["y"] - lh["y"], rh["x"] - lh["x"]))
 
         separation = abs(shoulder_angle - hip_angle)
+        if separation > 180:
+            separation = 360 - separation
         return round(float(separation), 1)

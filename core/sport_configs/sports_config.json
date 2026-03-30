@@ -120,7 +120,7 @@
               "points": [
                 "left_hip",
                 "left_shoulder",
-                "nose"
+                "left_ear"
               ],
               "description": "드라이버 BS trunk extension",
               "data_source": {
@@ -489,7 +489,7 @@
               "points": [
                 "left_hip",
                 "left_shoulder",
-                "nose"
+                "left_ear"
               ],
               "description": "아이언은 Driver보다 상체 숙임이 큼",
               "data_source": {
@@ -852,7 +852,7 @@
               "points": [
                 "left_hip",
                 "left_shoulder",
-                "nose"
+                "left_ear"
               ],
               "description": "퍼팅 어드레스에서 눈이 볼 위에",
               "data_source": {
@@ -1049,7 +1049,7 @@
               "points": [
                 "left_hip",
                 "left_shoulder",
-                "nose"
+                "left_ear"
               ],
               "description": "클럽이 짧아 더 숙임",
               "data_source": {

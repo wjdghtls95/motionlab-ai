@@ -1,29 +1,39 @@
 #!/usr/bin/env python3
 """
-캘리브레이션 데이터 수집 스크립트 (R-051 / R-055)
+캘리브레이션 데이터 수집 스크립트 (R-051 / R-055 / Stage 2)
 
 YouTube URL에서 프로 선수 영상을 다운로드하여 MediaPipe로 관절 각도를 측정하고
 sports_config.json의 기준값(mediapipe_center, std)을 실측값으로 업데이트합니다.
 
 기능:
+  - 카메라 앵글별 분리 수집: --camera-angle face_on|dtl
+      face_on 모드: spine_angle 제외 (측면 영상에서만 정확)
+      dtl 모드: hip_shoulder_separation 제외 (정면 영상에서만 정확)
+  - savgol_filter 스무딩: 랜드마크 좌표 노이즈 제거 (window=5, polyorder=2)
   - 논문값 sanity check: 실측값이 논문값 대비 ±SANITY_THRESHOLD° 초과 시 경고
   - 샘플 부족 fallback: sample_count < MIN_SAMPLES이면 논문값 유지
-  - 메타 자동 기록: measured_at, source_file, paper_reference, paper_delta
+  - 메타 자동 기록: measured_at, source_file, camera_angle, paper_reference, paper_delta
   - config_version 자동 bump: 2.x.x → 3.0.0 (최초 실측값 적용 시)
 
 사용법:
     cd motionlab-ai
     source venv/bin/activate
-    pip install yt-dlp  # 또는: pip install -r requirements-dev.txt
+    pip install yt-dlp  # 없으면
 
+    # face-on 영상 수집
     python scripts/collect_calibration.py \\
-        --url-file ../motionlab-config/calibration_data/urls/golf_driver.md \\
-        --sport GOLF --sub DRIVER
+        --url-file ../motionlab-config/calibration_data/urls/golf_driver_face_on.md \\
+        --sport GOLF --sub DRIVER --camera-angle face_on
+
+    # dtl 영상 수집
+    python scripts/collect_calibration.py \\
+        --url-file ../motionlab-config/calibration_data/urls/golf_driver_dtl.md \\
+        --sport GOLF --sub DRIVER --camera-angle dtl
 
     # 결과 확인만 (파일 저장 없음)
     python scripts/collect_calibration.py \\
-        --url-file ../motionlab-config/calibration_data/urls/golf_driver.md \\
-        --sport GOLF --sub DRIVER --dry-run
+        --url-file ../motionlab-config/calibration_data/urls/golf_driver_face_on.md \\
+        --sport GOLF --sub DRIVER --camera-angle face_on --dry-run
 
 버전 전략:
     v1.0/v2.0 CSV 디렉토리 = 논문값 이력 (보존)
@@ -53,6 +63,7 @@ import mediapipe as mp
 import numpy as np
 from mediapipe.tasks import python as mp_python
 from mediapipe.tasks.python import vision as mp_vision
+from scipy.signal import savgol_filter
 
 # motionlab-ai 패키지 루트를 경로에 추가 (scripts/ 하위에서 실행 시)
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -73,6 +84,18 @@ logger = logging.getLogger(__name__)
 # ── 상수 ──────────────────────────────────────────────────────
 # 실측값이 논문값과 이 각도 이상 차이나면 경고 (측정 오류 의심)
 SANITY_THRESHOLD = 30.0
+
+# 카메라 앵글별 제외 각도 (해당 앵글에서 측정 불가 또는 부정확)
+# face_on: 골퍼 정면 촬영 — 어깨 앞뒤 겹침으로 spine_angle 측정 불가
+# dtl: 골퍼 측면 촬영 — 양쪽 어깨 구분 안 돼 hip_shoulder_separation 부정확
+_CAMERA_ANGLE_EXCLUDE: Dict[str, set] = {
+    "face_on": {"spine_angle"},
+    "dtl": {"hip_shoulder_separation"},
+}
+
+# savgol_filter 파라미터
+_SAVGOL_WINDOW = 5
+_SAVGOL_POLYORDER = 2
 
 # 이 수 미만이면 샘플 부족으로 논문값 fallback
 MIN_SAMPLES = 5
@@ -224,6 +247,72 @@ def _create_pose_analyzer():
 
 
 # ──────────────────────────────────────────────────────────────
+# 랜드마크 스무딩
+# ──────────────────────────────────────────────────────────────
+
+
+def _smooth_landmarks(frames: List[Dict]) -> List[Dict]:
+    """
+    각 랜드마크의 x/y 좌표를 시간축 기준으로 savgol_filter 스무딩.
+
+    프레임 단위 노이즈 제거 — 프로 영상에서도 좌표가 튀어 기준값에
+    노이즈가 섞이는 것을 방지한다.
+
+    프레임 수가 window_length보다 적으면 스무딩 없이 원본 반환.
+    """
+    if len(frames) < _SAVGOL_WINDOW:
+        return frames
+
+    n_landmarks = len(frames[0].get("landmarks", []))
+    # 딥카피 없이 좌표만 교체할 수 있도록 프레임 복사
+    smoothed: List[Dict] = [
+        {
+            "frame_index": f["frame_index"],
+            "landmarks": [dict(lm) for lm in f["landmarks"]],
+        }
+        for f in frames
+    ]
+
+    for lm_idx in range(n_landmarks):
+        for coord in ("x", "y"):
+            values = [f["landmarks"][lm_idx].get(coord, 0.0) for f in frames]
+            smoothed_values = savgol_filter(
+                values,
+                window_length=_SAVGOL_WINDOW,
+                polyorder=_SAVGOL_POLYORDER,
+            )
+            for frame_idx, val in enumerate(smoothed_values):
+                smoothed[frame_idx]["landmarks"][lm_idx][coord] = float(val)
+
+    return smoothed
+
+
+# ──────────────────────────────────────────────────────────────
+# 카메라 앵글별 각도 필터
+# ──────────────────────────────────────────────────────────────
+
+
+def _filter_angles_by_camera(
+    angle_config_flat: Dict,
+    camera_angle: Optional[str],
+) -> Dict:
+    """
+    카메라 앵글에 따라 측정 불가 각도를 config에서 제거.
+
+    camera_angle이 None이면 원본 그대로 반환 (하위 호환).
+    """
+    if camera_angle is None:
+        return angle_config_flat
+
+    excluded = _CAMERA_ANGLE_EXCLUDE.get(camera_angle, set())
+    if excluded:
+        removed = [k for k in angle_config_flat if k in excluded]
+        if removed:
+            logger.info(f"📷 camera_angle={camera_angle} → 측정 제외 각도: {removed}")
+    return {k: v for k, v in angle_config_flat.items() if k not in excluded}
+
+
+# ──────────────────────────────────────────────────────────────
 # URL 파일 읽기
 # ──────────────────────────────────────────────────────────────
 
@@ -360,6 +449,8 @@ def extract_angles_from_video(
     """
     analyzer = _create_pose_analyzer()
     landmarks_data = analyzer.extract_landmarks(video_path)
+    # 랜드마크 좌표 스무딩 — 각도 계산 전 노이즈 제거
+    landmarks_data["frames"] = _smooth_landmarks(landmarks_data["frames"])
     frames = landmarks_data["frames"]
     fps = landmarks_data.get("fps", 30.0)
     calc = AngleCalculator(angle_config=angle_config_flat)
@@ -722,6 +813,7 @@ def update_sports_config(
     source_file: str,
     phase_map: Optional[Dict[str, str]] = None,
     dry_run: bool = False,
+    camera_angle: Optional[str] = None,
 ) -> None:
     """
     sports_config.json의 data_source 값을 실측값으로 교체.
@@ -797,6 +889,7 @@ def update_sports_config(
             "conversion": "mediapipe_measured",
             "mediapipe_center": stat["mean"],
             "std": stat["std"],
+            "camera_angle": camera_angle,
             "sample_count": stat["n"],
             "measured_at": today,
             "source_file": source_name,
@@ -894,6 +987,17 @@ def main() -> None:
         default=str(Path(__file__).parent.parent.parent / "motionlab-config"),
         help="motionlab-config 레포 경로 (기본: ../motionlab-config)",
     )
+    parser.add_argument(
+        "--camera-angle",
+        choices=["face_on", "dtl"],
+        default=None,
+        help=(
+            "카메라 앵글 (face_on / dtl). "
+            "face_on: spine_angle 제외. "
+            "dtl: hip_shoulder_separation 제외. "
+            "생략 시 모든 각도 측정 (하위 호환)."
+        ),
+    )
     args = parser.parse_args()
 
     # ── URL 읽기
@@ -902,7 +1006,10 @@ def main() -> None:
         logger.error("처리할 URL이 없습니다. 파일을 확인해 주세요.")
         sys.exit(1)
 
-    logger.info(f"📋 {len(urls)}개 URL  |  종목: {args.sport}/{args.sub}")
+    camera_label = args.camera_angle or "전체"
+    logger.info(
+        f"📋 {len(urls)}개 URL  |  종목: {args.sport}/{args.sub}  |  앵글: {camera_label}"
+    )
 
     # ── 각도 config 로드
     raw_config = load_sports_config()
@@ -914,6 +1021,8 @@ def main() -> None:
         sys.exit(1)
 
     angle_config_flat = _flatten_angle_config(angle_config_raw)
+    # 카메라 앵글에 따라 측정 불가 각도 제거
+    angle_config_flat = _filter_angles_by_camera(angle_config_flat, args.camera_angle)
 
     # 페이즈 config (PhaseDetector 입력) 및 각도별 페이즈 맵
     phase_config: Optional[List] = sub_config.get("phases") or None
@@ -995,6 +1104,7 @@ def main() -> None:
             args.url_file,
             phase_map,
             args.dry_run,
+            camera_angle=args.camera_angle,
         )
 
 
