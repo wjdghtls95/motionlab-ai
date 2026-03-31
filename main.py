@@ -42,12 +42,13 @@ async def lifespan(app: FastAPI):
 
 
 # FastAPI 앱 생성
+_is_development = settings.APP_ENV == "development"
 app = FastAPI(
     title="MotionLab AI Server",
     description="MediaPipe + GPT-4o-mini 기반 운동 분석 서버",
     version="1.0.0",
-    docs_url="/docs",  # Swagger UI
-    redoc_url="/redoc",  # ReDoc
+    docs_url="/docs" if _is_development else None,  # 프로덕션 Swagger 비공개
+    redoc_url="/redoc" if _is_development else None,  # 프로덕션 ReDoc 비공개
     openapi_tags=[
         {"name": "Health", "description": "서버 상태 확인"},
         {"name": "Analysis", "description": "운동 영상 분석"},
@@ -58,7 +59,6 @@ app = FastAPI(
 # CORS 설정
 # 개발 환경: 와일드카드(로컬 테스트 편의)
 # 운영 환경: ALLOWED_ORIGINS 환경변수에 명시된 출처만 허용
-_is_development = settings.APP_ENV == "development"
 _allowed_origins = ["*"] if _is_development else settings.ALLOWED_ORIGINS.split(",")
 _allowed_methods = ["*"] if _is_development else ["GET", "POST"]
 _allowed_headers = ["*"] if _is_development else ["X-Internal-API-Key", "Content-Type"]

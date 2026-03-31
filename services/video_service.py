@@ -2,8 +2,8 @@
 MotionLab AI - 영상 서비스
 """
 
+import asyncio
 import os
-import time
 import logging
 from typing import Dict, Any, Optional
 from pathlib import Path
@@ -93,7 +93,7 @@ class VideoResource:
                     raise VideoDownloadError(
                         details=f"motion_id={self.motion_id}, url={self.video_url}, error={str(e)}"
                     )
-                time.sleep(1)
+                await asyncio.sleep(1)
 
         raise VideoDownloadError(
             details=f"motion_id={self.motion_id}, retries={self.max_retries}"
@@ -112,7 +112,7 @@ class VideoResource:
                     return
             except Exception:
                 if attempt < self.max_retries - 1:
-                    time.sleep(0.5)
+                    await asyncio.sleep(0.5)
                 else:
                     logger.error(f"⚠️ 파일 삭제 실패: {self.video_path}")
 
