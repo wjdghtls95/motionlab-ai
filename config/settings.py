@@ -4,6 +4,7 @@ MotionLab AI - 환경 설정 관리
 """
 
 from functools import lru_cache
+from pydantic import model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -52,6 +53,16 @@ class Settings(BaseSettings):
     CONFIG_SOURCE: str = "local"
     SPORTS_CONFIG_PATH: str = ""  # file 모드: 컨테이너 내부 절대 경로
     CONFIG_REMOTE_URL: str = ""  # remote 모드: sports_config.json을 서빙하는 URL
+
+    @model_validator(mode="after")
+    def validate_openai_key(self) -> "Settings":
+        """ENABLE_LLM_NOOP=False 시 OPENAI_API_KEY 필수 검증."""
+        if not self.ENABLE_LLM_NOOP and not self.OPENAI_API_KEY:
+            raise ValueError(
+                "OPENAI_API_KEY must be set when ENABLE_LLM_NOOP=False. "
+                "Set ENABLE_LLM_NOOP=True for local development without OpenAI."
+            )
+        return self
 
     model_config = SettingsConfigDict(
         env_file=".env", env_file_encoding="utf-8", case_sensitive=True, extra="ignore"
