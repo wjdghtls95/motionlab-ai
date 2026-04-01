@@ -1,11 +1,11 @@
 {
   "meta": {
-    "config_version": "2.0.5",
-    "generated_at": "2026-03-31T11:38:14.596614",
-    "source_csv_hash": "sha256:f308b03f0967",
+    "config_version": "2.0.9",
+    "generated_at": "2026-04-01T21:19:55.864551",
+    "source_csv_hash": "sha256:99234cce1c75",
     "source_folder": "v2.0",
     "generator": "csv_to_config.py",
-    "changelog": "validation 범위 MediaPipe 좌표계로 수정"
+    "changelog": ""
   },
   "sports": {
     "GOLF": {
@@ -24,43 +24,43 @@
                 "original_value": 172.5,
                 "paper_std": 5.0,
                 "conversion": "mediapipe_measured",
-                "mediapipe_center": 13.9,
-                "measured_value": 13.9,
-                "measured_std": 12.2,
+                "mediapipe_center": 128.0,
+                "measured_value": 128.0,
+                "measured_std": 17.2,
                 "measured_n": 30,
-                "measured_at": "2026-03-31",
-                "paper_delta": -158.6
+                "measured_at": "2026-04-01",
+                "paper_delta": -44.5
               },
               "angle_validation": {
-                "min_normal": 0.0,
-                "max_normal": 45.0
+                "min_normal": 90.0,
+                "max_normal": 180.0
               },
               "levels": {
                 "PRO": {
                   "ideal_range": [
-                    0.0,
-                    32.2
+                    102.2,
+                    153.8
                   ],
                   "weight": 0.17
                 },
                 "ADVANCED": {
                   "ideal_range": [
-                    0.0,
-                    35.9
+                    97.0,
+                    159.0
                   ],
                   "weight": 0.17
                 },
                 "INTERMEDIATE": {
                   "ideal_range": [
-                    0.0,
-                    41.3
+                    90.0,
+                    166.7
                   ],
                   "weight": 0.17
                 },
                 "BEGINNER": {
                   "ideal_range": [
-                    0.0,
-                    45.0
+                    90.0,
+                    179.6
                   ],
                   "weight": 0.17
                 }
@@ -78,12 +78,12 @@
                 "original_value": 90.0,
                 "paper_std": 10.0,
                 "conversion": "mediapipe_measured",
-                "mediapipe_center": 127.2,
-                "measured_value": 127.2,
-                "measured_std": 40.5,
-                "measured_n": 21,
-                "measured_at": "2026-03-31",
-                "paper_delta": 37.2
+                "mediapipe_center": 117.2,
+                "measured_value": 117.2,
+                "measured_std": 13.0,
+                "measured_n": 30,
+                "measured_at": "2026-04-01",
+                "paper_delta": 27.2
               },
               "angle_validation": {
                 "min_normal": 80.0,
@@ -92,29 +92,29 @@
               "levels": {
                 "PRO": {
                   "ideal_range": [
-                    80.0,
-                    160.0
+                    97.7,
+                    136.7
                   ],
                   "weight": 0.17
                 },
                 "ADVANCED": {
                   "ideal_range": [
-                    80.0,
-                    160.0
+                    93.8,
+                    140.6
                   ],
                   "weight": 0.17
                 },
                 "INTERMEDIATE": {
                   "ideal_range": [
-                    80.0,
-                    160.0
+                    88.0,
+                    146.4
                   ],
                   "weight": 0.17
                 },
                 "BEGINNER": {
                   "ideal_range": [
                     80.0,
-                    160.0
+                    156.2
                   ],
                   "weight": 0.17
                 }
@@ -132,12 +132,12 @@
                 "original_value": 28.3,
                 "paper_std": 5.6,
                 "conversion": "mediapipe_measured",
-                "mediapipe_center": 147.9,
-                "measured_value": 147.9,
-                "measured_std": 20.0,
+                "mediapipe_center": 150.7,
+                "measured_value": 150.7,
+                "measured_std": 4.8,
                 "measured_n": 30,
-                "measured_at": "2026-03-31",
-                "paper_delta": -3.8
+                "measured_at": "2026-04-01",
+                "paper_delta": -1.0
               },
               "angle_validation": {
                 "min_normal": 125.0,
@@ -146,29 +146,29 @@
               "levels": {
                 "PRO": {
                   "ideal_range": [
-                    125.0,
-                    177.9
+                    143.5,
+                    157.9
                   ],
                   "weight": 0.17
                 },
                 "ADVANCED": {
                   "ideal_range": [
-                    125.0,
-                    180.0
+                    142.1,
+                    159.3
                   ],
                   "weight": 0.17
                 },
                 "INTERMEDIATE": {
                   "ideal_range": [
-                    125.0,
-                    180.0
+                    139.9,
+                    161.5
                   ],
                   "weight": 0.17
                 },
                 "BEGINNER": {
                   "ideal_range": [
-                    125.0,
-                    180.0
+                    136.3,
+                    165.1
                   ],
                   "weight": 0.17
                 }
@@ -182,12 +182,12 @@
                 "original_value": 56.0,
                 "paper_std": 4.0,
                 "conversion": "mediapipe_measured",
-                "mediapipe_center": 16.6,
-                "measured_value": 16.6,
-                "measured_std": 30.2,
+                "mediapipe_center": 18.2,
+                "measured_value": 18.2,
+                "measured_std": 9.9,
                 "measured_n": 34,
-                "measured_at": "2026-03-31",
-                "paper_delta": -39.4
+                "measured_at": "2026-04-01",
+                "paper_delta": -37.8
               },
               "angle_validation": {
                 "min_normal": 5.0,
@@ -197,28 +197,28 @@
                 "PRO": {
                   "ideal_range": [
                     5.0,
-                    50.0
+                    33.0
                   ],
                   "weight": 0.16
                 },
                 "ADVANCED": {
                   "ideal_range": [
                     5.0,
-                    50.0
+                    36.0
                   ],
                   "weight": 0.16
                 },
                 "INTERMEDIATE": {
                   "ideal_range": [
                     5.0,
-                    50.0
+                    40.5
                   ],
                   "weight": 0.16
                 },
                 "BEGINNER": {
                   "ideal_range": [
                     5.0,
-                    50.0
+                    47.9
                   ],
                   "weight": 0.16
                 }
@@ -236,12 +236,12 @@
                 "original_value": 45.2,
                 "paper_std": 10.0,
                 "conversion": "mediapipe_measured",
-                "mediapipe_center": 172.1,
-                "measured_value": 172.1,
-                "measured_std": 6.9,
-                "measured_n": 33,
-                "measured_at": "2026-03-31",
-                "paper_delta": 37.3
+                "mediapipe_center": 170.7,
+                "measured_value": 170.7,
+                "measured_std": 8.0,
+                "measured_n": 29,
+                "measured_at": "2026-04-01",
+                "paper_delta": 35.9
               },
               "angle_validation": {
                 "min_normal": 120.0,
@@ -250,28 +250,28 @@
               "levels": {
                 "PRO": {
                   "ideal_range": [
-                    161.8,
+                    158.7,
                     180.0
                   ],
                   "weight": 0.17
                 },
                 "ADVANCED": {
                   "ideal_range": [
-                    159.7,
+                    156.3,
                     180.0
                   ],
                   "weight": 0.17
                 },
                 "INTERMEDIATE": {
                   "ideal_range": [
-                    156.6,
+                    152.7,
                     180.0
                   ],
                   "weight": 0.17
                 },
                 "BEGINNER": {
                   "ideal_range": [
-                    151.4,
+                    146.7,
                     180.0
                   ],
                   "weight": 0.17
@@ -290,12 +290,12 @@
                 "original_value": 26.6,
                 "paper_std": 12.5,
                 "conversion": "mediapipe_measured",
-                "mediapipe_center": 157.5,
-                "measured_value": 157.5,
-                "measured_std": 15.5,
+                "mediapipe_center": 152.8,
+                "measured_value": 152.8,
+                "measured_std": 14.2,
                 "measured_n": 30,
-                "measured_at": "2026-03-31",
-                "paper_delta": 4.1
+                "measured_at": "2026-04-01",
+                "paper_delta": -0.6
               },
               "angle_validation": {
                 "min_normal": 125.0,
@@ -304,15 +304,15 @@
               "levels": {
                 "PRO": {
                   "ideal_range": [
-                    134.2,
-                    180.0
+                    131.5,
+                    174.1
                   ],
                   "weight": 0.16
                 },
                 "ADVANCED": {
                   "ideal_range": [
-                    129.6,
-                    180.0
+                    127.2,
+                    178.4
                   ],
                   "weight": 0.16
                 },
@@ -349,43 +349,43 @@
                 "original_value": null,
                 "paper_std": null,
                 "conversion": "mediapipe_measured",
-                "mediapipe_center": 38.3,
-                "measured_value": 38.3,
-                "measured_std": 30.4,
+                "mediapipe_center": 121.6,
+                "measured_value": 121.6,
+                "measured_std": 20.6,
                 "measured_n": 31,
-                "measured_at": "2026-03-31",
+                "measured_at": "2026-04-01",
                 "paper_delta": null
               },
               "angle_validation": {
-                "min_normal": 0.0,
-                "max_normal": 80.0
+                "min_normal": 90.0,
+                "max_normal": 180.0
               },
               "levels": {
                 "PRO": {
                   "ideal_range": [
-                    0.0,
-                    80.0
+                    90.7,
+                    152.5
                   ],
                   "weight": 0.1667
                 },
                 "ADVANCED": {
                   "ideal_range": [
-                    0.0,
-                    80.0
+                    90.0,
+                    158.7
                   ],
                   "weight": 0.1667
                 },
                 "INTERMEDIATE": {
                   "ideal_range": [
-                    0.0,
-                    80.0
+                    90.0,
+                    167.9
                   ],
                   "weight": 0.1667
                 },
                 "BEGINNER": {
                   "ideal_range": [
-                    0.0,
-                    80.0
+                    90.0,
+                    180.0
                   ],
                   "weight": 0.1667
                 }
@@ -403,43 +403,43 @@
                 "original_value": null,
                 "paper_std": null,
                 "conversion": "mediapipe_measured",
-                "mediapipe_center": 48.5,
-                "measured_value": 48.5,
-                "measured_std": 54.3,
-                "measured_n": 5,
-                "measured_at": "2026-03-31",
+                "mediapipe_center": 107.4,
+                "measured_value": 107.4,
+                "measured_std": 12.5,
+                "measured_n": 31,
+                "measured_at": "2026-04-01",
                 "paper_delta": null
               },
               "angle_validation": {
-                "min_normal": 20.0,
-                "max_normal": 90.0
+                "min_normal": 60.0,
+                "max_normal": 120.0
               },
               "levels": {
                 "PRO": {
                   "ideal_range": [
-                    20.0,
-                    90.0
+                    88.7,
+                    120.0
                   ],
                   "weight": 0.1667
                 },
                 "ADVANCED": {
                   "ideal_range": [
-                    20.0,
-                    90.0
+                    84.9,
+                    120.0
                   ],
                   "weight": 0.1667
                 },
                 "INTERMEDIATE": {
                   "ideal_range": [
-                    20.0,
-                    90.0
+                    79.3,
+                    120.0
                   ],
                   "weight": 0.1667
                 },
                 "BEGINNER": {
                   "ideal_range": [
-                    20.0,
-                    90.0
+                    69.9,
+                    120.0
                   ],
                   "weight": 0.1667
                 }
@@ -457,11 +457,11 @@
                 "original_value": null,
                 "paper_std": null,
                 "conversion": "mediapipe_measured",
-                "mediapipe_center": 154.1,
-                "measured_value": 154.1,
-                "measured_std": 16.5,
+                "mediapipe_center": 151.5,
+                "measured_value": 151.5,
+                "measured_std": 4.2,
                 "measured_n": 31,
-                "measured_at": "2026-03-31",
+                "measured_at": "2026-04-01",
                 "paper_delta": null
               },
               "angle_validation": {
@@ -471,29 +471,29 @@
               "levels": {
                 "PRO": {
                   "ideal_range": [
-                    129.3,
-                    178.8
+                    145.2,
+                    157.8
                   ],
                   "weight": 0.1667
                 },
                 "ADVANCED": {
                   "ideal_range": [
-                    125.0,
-                    180.0
+                    143.9,
+                    159.1
                   ],
                   "weight": 0.1667
                 },
                 "INTERMEDIATE": {
                   "ideal_range": [
-                    125.0,
-                    180.0
+                    142.1,
+                    160.9
                   ],
                   "weight": 0.1667
                 },
                 "BEGINNER": {
                   "ideal_range": [
-                    125.0,
-                    180.0
+                    138.9,
+                    164.1
                   ],
                   "weight": 0.1667
                 }
@@ -507,43 +507,43 @@
                 "original_value": null,
                 "paper_std": null,
                 "conversion": "mediapipe_measured",
-                "mediapipe_center": 20.3,
-                "measured_value": 20.3,
-                "measured_std": 32.5,
+                "mediapipe_center": 18.6,
+                "measured_value": 18.6,
+                "measured_std": 9.5,
                 "measured_n": 31,
-                "measured_at": "2026-03-31",
+                "measured_at": "2026-04-01",
                 "paper_delta": null
               },
               "angle_validation": {
-                "min_normal": 10.0,
-                "max_normal": 60.0
+                "min_normal": 20.0,
+                "max_normal": 70.0
               },
               "levels": {
                 "PRO": {
                   "ideal_range": [
-                    10.0,
-                    60.0
+                    20.0,
+                    32.9
                   ],
                   "weight": 0.1667
                 },
                 "ADVANCED": {
                   "ideal_range": [
-                    10.0,
-                    60.0
+                    20.0,
+                    35.7
                   ],
                   "weight": 0.1667
                 },
                 "INTERMEDIATE": {
                   "ideal_range": [
-                    10.0,
-                    60.0
+                    20.0,
+                    40.0
                   ],
                   "weight": 0.1667
                 },
                 "BEGINNER": {
                   "ideal_range": [
-                    10.0,
-                    60.0
+                    20.0,
+                    47.1
                   ],
                   "weight": 0.1667
                 }
@@ -561,11 +561,11 @@
                 "original_value": null,
                 "paper_std": null,
                 "conversion": "mediapipe_measured",
-                "mediapipe_center": 172.6,
-                "measured_value": 172.6,
-                "measured_std": 9.0,
-                "measured_n": 29,
-                "measured_at": "2026-03-31",
+                "mediapipe_center": 170.5,
+                "measured_value": 170.5,
+                "measured_std": 5.4,
+                "measured_n": 31,
+                "measured_at": "2026-04-01",
                 "paper_delta": null
               },
               "angle_validation": {
@@ -575,28 +575,28 @@
               "levels": {
                 "PRO": {
                   "ideal_range": [
-                    159.1,
-                    180.0
+                    162.4,
+                    178.6
                   ],
                   "weight": 0.1667
                 },
                 "ADVANCED": {
                   "ideal_range": [
-                    156.4,
+                    160.8,
                     180.0
                   ],
                   "weight": 0.1667
                 },
                 "INTERMEDIATE": {
                   "ideal_range": [
-                    152.3,
+                    158.3,
                     180.0
                   ],
                   "weight": 0.1667
                 },
                 "BEGINNER": {
                   "ideal_range": [
-                    145.6,
+                    154.3,
                     180.0
                   ],
                   "weight": 0.1667
@@ -615,11 +615,11 @@
                 "original_value": null,
                 "paper_std": null,
                 "conversion": "mediapipe_measured",
-                "mediapipe_center": 154.6,
-                "measured_value": 154.6,
-                "measured_std": 14.0,
-                "measured_n": 30,
-                "measured_at": "2026-03-31",
+                "mediapipe_center": 148.6,
+                "measured_value": 148.6,
+                "measured_std": 11.4,
+                "measured_n": 31,
+                "measured_at": "2026-04-01",
                 "paper_delta": null
               },
               "angle_validation": {
@@ -629,22 +629,22 @@
               "levels": {
                 "PRO": {
                   "ideal_range": [
-                    133.6,
-                    175.6
+                    131.5,
+                    165.7
                   ],
                   "weight": 0.1667
                 },
                 "ADVANCED": {
                   "ideal_range": [
-                    129.4,
-                    179.8
+                    128.1,
+                    169.1
                   ],
                   "weight": 0.1667
                 },
                 "INTERMEDIATE": {
                   "ideal_range": [
-                    123.1,
-                    180.0
+                    122.9,
+                    174.2
                   ],
                   "weight": 0.1667
                 },
