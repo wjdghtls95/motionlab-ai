@@ -9,6 +9,7 @@ from typing import Dict, Any, Optional
 from pathlib import Path
 import httpx
 import cv2
+import sentry_sdk
 
 from utils.exceptions import (
     VideoDownloadError,
@@ -115,6 +116,10 @@ class VideoResource:
                     await asyncio.sleep(0.5)
                 else:
                     logger.error(f"⚠️ 파일 삭제 실패: {self.video_path}")
+                    sentry_sdk.capture_message(
+                        f"임시 파일 삭제 실패 (motion_id={self.motion_id}): {self.video_path}",
+                        level="error",
+                    )
 
 
 class VideoService:

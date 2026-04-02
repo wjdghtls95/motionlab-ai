@@ -4,15 +4,55 @@ MotionLab AI - FastAPI 서버 진입점
 """
 
 import uvicorn
+import sentry_sdk
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from api import health, analyze, admin
 from config.settings import get_settings
 from utils.logger import logger, mask_sensitive
 
 settings = get_settings()
+
+# Sentry 초기화 (DSN 설정 시에만 활성화)
+if settings.SENTRY_DSN:
+    sentry_sdk.init(
+        dsn=settings.SENTRY_DSN,
+        environment=settings.APP_ENV,
+    )
+    logger.info("✅ Sentry 초기화 완료")
+
+
+def _cleanup_stale_temp_files(temp_dir: str) -> None:
+    """서버 시작 시 이전 실행에서 정리되지 않은 임시 영상 파일을 삭제."""
+    temp_path = Path(temp_dir)
+    if not temp_path.exists():
+        return
+
+    stale_files = list(temp_path.glob("*.mp4"))
+    if not stale_files:
+        return
+
+    deleted, failed = 0, 0
+    for f in stale_files:
+        try:
+            f.unlink()
+            deleted += 1
+        except Exception as e:
+            failed += 1
+            logger.error(f"⚠️ 잔여 임시 파일 삭제 실패: {f} — {e}")
+
+    logger.warning(
+        f"🗑️ 잔여 임시 파일 정리: 삭제 {deleted}개 / 실패 {failed}개 "
+        f"(이전 실행에서 cleanup 누락된 파일)"
+    )
+    if failed > 0 and settings.SENTRY_DSN:
+        sentry_sdk.capture_message(
+            f"Startup: {failed}개 잔여 임시 파일 삭제 실패",
+            level="warning",
+        )
 
 
 @asynccontextmanager
@@ -24,6 +64,7 @@ async def lifespan(app: FastAPI):
     - yield 후: 서버 종료 시 실행 (shutdown)
     """
     # ========== Startup ==========
+    _cleanup_stale_temp_files(settings.TEMP_VIDEO_DIR)
     logger.info("=" * 60)
     logger.info("MotionLab AI Server 시작")
     logger.info(f"포트: {settings.PORT}")

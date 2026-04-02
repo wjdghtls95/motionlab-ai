@@ -46,6 +46,9 @@ class Settings(BaseSettings):
     # 로깅
     LOG_LEVEL: str = "INFO"
 
+    # Sentry (빈 문자열이면 비활성화)
+    SENTRY_DSN: str = ""
+
     # Config 소스 설정
     # local  — 이미지에 번들된 파일 사용 (기본값, 기존 동작 유지)
     # file   — SPORTS_CONFIG_PATH 경로의 파일 사용 (volume mount 연동)
