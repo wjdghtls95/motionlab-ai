@@ -1,6 +1,7 @@
+import asyncio
 import pytest
-from unittest.mock import patch, MagicMock
-from services.video_service import VideoService
+from unittest.mock import patch, MagicMock, AsyncMock
+from services.video_service import VideoService, VideoResource
 
 
 @pytest.fixture
@@ -76,3 +77,55 @@ def test_metadata_empty_video(video_service):
         metadata = video_service.extract_metadata("/fake/video.mp4")
 
     assert metadata["duration_seconds"] == 0
+
+
+# ── VideoResource._safe_cleanup 테스트 ──────────────────────────────────────
+
+
+# 6. 파일이 존재하면 정상 삭제되고 Sentry 호출 없음
+def test_safe_cleanup_success_no_sentry():
+    # 방지: 정상 삭제 시 불필요한 Sentry 알림 전송
+    resource = VideoResource(motion_id=1, video_url="http://example.com/video.mp4")
+    resource.video_path = "/tmp/1.mp4"
+
+    with (
+        patch("os.path.exists", return_value=True),
+        patch("os.remove") as mock_remove,
+        patch("services.video_service.sentry_sdk.capture_message") as mock_sentry,
+    ):
+        asyncio.run(resource._safe_cleanup())
+
+    mock_remove.assert_called_once_with("/tmp/1.mp4")
+    mock_sentry.assert_not_called()
+
+
+# 7. 재시도 모두 실패 시 Sentry capture_message 호출됨
+def test_safe_cleanup_failure_sends_sentry():
+    # 방지: cleanup 실패가 Sentry에 기록 안 돼 디스크 풀 상황 인지 못함
+    resource = VideoResource(motion_id=42, video_url="http://example.com/video.mp4")
+    resource.video_path = "/tmp/42.mp4"
+
+    with (
+        patch("os.path.exists", return_value=True),
+        patch("os.remove", side_effect=OSError("Permission denied")),
+        patch("asyncio.sleep", new_callable=AsyncMock),
+        patch("services.video_service.sentry_sdk.capture_message") as mock_sentry,
+    ):
+        asyncio.run(resource._safe_cleanup())
+
+    mock_sentry.assert_called_once()
+    call_args = mock_sentry.call_args
+    assert "42" in call_args[0][0]  # motion_id 포함
+    assert call_args[1]["level"] == "error"
+
+
+# 8. video_path가 None이면 cleanup 시도 없이 조기 반환
+def test_safe_cleanup_no_path_skips():
+    # 방지: 다운로드 실패 후 None path로 cleanup 시 AttributeError
+    resource = VideoResource(motion_id=1, video_url="http://example.com/video.mp4")
+    resource.video_path = None
+
+    with patch("os.remove") as mock_remove:
+        asyncio.run(resource._safe_cleanup())
+
+    mock_remove.assert_not_called()
