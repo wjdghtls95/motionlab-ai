@@ -1,11 +1,11 @@
 {
   "meta": {
-    "config_version": "2.0.9",
-    "generated_at": "2026-04-01T21:19:55.864551",
+    "config_version": "2.0.10",
+    "generated_at": "2026-04-07T07:53:11.557309",
     "source_csv_hash": "sha256:99234cce1c75",
     "source_folder": "v2.0",
     "generator": "csv_to_config.py",
-    "changelog": ""
+    "changelog": "R-086: phases 정의 추가 (address/backswing_top/impact)"
   },
   "sports": {
     "GOLF": {
@@ -333,7 +333,34 @@
               }
             }
           },
-          "phases": []
+          "phases": [
+            {
+              "name": "address",
+              "target_angle": "left_arm_angle",
+              "detection_rule": "stabilization",
+              "params": {
+                "window": 5,
+                "std_threshold": 2.0,
+                "position": "start"
+              }
+            },
+            {
+              "name": "backswing_top",
+              "target_angle": "left_arm_angle",
+              "detection_rule": "angle_min",
+              "params": {
+                "search_after": "address"
+              }
+            },
+            {
+              "name": "impact",
+              "target_angle": "left_arm_angle",
+              "detection_rule": "angle_max",
+              "params": {
+                "search_after": "backswing_top"
+              }
+            }
+          ]
         },
         "IRON": {
           "angles": {
@@ -658,7 +685,34 @@
               }
             }
           },
-          "phases": []
+          "phases": [
+            {
+              "name": "address",
+              "target_angle": "left_arm_angle",
+              "detection_rule": "stabilization",
+              "params": {
+                "window": 5,
+                "std_threshold": 2.0,
+                "position": "start"
+              }
+            },
+            {
+              "name": "backswing_top",
+              "target_angle": "left_arm_angle",
+              "detection_rule": "angle_min",
+              "params": {
+                "search_after": "address"
+              }
+            },
+            {
+              "name": "impact",
+              "target_angle": "left_arm_angle",
+              "detection_rule": "angle_max",
+              "params": {
+                "search_after": "backswing_top"
+              }
+            }
+          ]
         }
       }
     }

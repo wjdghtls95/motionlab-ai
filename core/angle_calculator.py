@@ -356,7 +356,7 @@ class AngleCalculator:
 
             for angle_name, angle_def in self.angle_config.items():
                 value = self._calculate_single_angle(angle_name, angle_def, landmarks)
-                if value is not None:
+                if value is not None and self._is_valid_angle(value, angle_def):
                     angles[angle_name] = value
 
             return angles if angles else None
@@ -364,6 +364,17 @@ class AngleCalculator:
         except Exception as e:
             logger.debug(f"프레임 각도 계산 실패: {e}")
             return None
+
+    def _is_valid_angle(self, value: float, angle_def: Dict) -> bool:
+        """angle_validation 범위(min_normal/max_normal) 벗어난 이상치 프레임 제거"""
+        validation = angle_def.get("angle_validation", {})
+        min_val = validation.get("min_normal")
+        max_val = validation.get("max_normal")
+        if min_val is not None and value < min_val:
+            return False
+        if max_val is not None and value > max_val:
+            return False
+        return True
 
     def _calculate_single_angle(
         self, angle_name: str, angle_def: Dict, landmarks: List[Dict]

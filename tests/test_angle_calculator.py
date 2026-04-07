@@ -408,3 +408,55 @@ class TestSmoothLandmarks:
         calc._smooth_landmarks(frames)
 
         assert frames[0]["landmarks"][0]["x"] == original_x
+
+
+class TestIsValidAngle:
+    """_is_valid_angle() 단위 테스트 — angle_validation 이상치 필터"""
+
+    def _def(self, min_normal=None, max_normal=None):
+        """angle_def 헬퍼"""
+        validation = {}
+        if min_normal is not None:
+            validation["min_normal"] = min_normal
+        if max_normal is not None:
+            validation["max_normal"] = max_normal
+        return {"angle_validation": validation}
+
+    def test_value_within_range_returns_true(self):
+        """범위 안 값 → True"""
+        calc = AngleCalculator({})
+        assert calc._is_valid_angle(150.0, self._def(90.0, 180.0)) is True
+
+    def test_value_below_min_returns_false(self):
+        """min_normal 미만 → False (MediaPipe 이상치 제거)"""
+        calc = AngleCalculator({})
+        assert calc._is_valid_angle(21.5, self._def(90.0, 180.0)) is False
+
+    def test_value_above_max_returns_false(self):
+        """max_normal 초과 → False"""
+        calc = AngleCalculator({})
+        assert calc._is_valid_angle(185.0, self._def(90.0, 180.0)) is False
+
+    def test_boundary_values_are_valid(self):
+        """경계값(min_normal, max_normal 정확히 일치) → True"""
+        calc = AngleCalculator({})
+        assert calc._is_valid_angle(90.0, self._def(90.0, 180.0)) is True
+        assert calc._is_valid_angle(180.0, self._def(90.0, 180.0)) is True
+
+    def test_no_angle_validation_always_valid(self):
+        """angle_validation 없는 angle_def → 항상 True"""
+        calc = AngleCalculator({})
+        assert calc._is_valid_angle(0.0, {}) is True
+        assert calc._is_valid_angle(999.0, {}) is True
+
+    def test_only_min_normal_set(self):
+        """min_normal만 있을 때 상한 제한 없음"""
+        calc = AngleCalculator({})
+        assert calc._is_valid_angle(89.0, self._def(min_normal=90.0)) is False
+        assert calc._is_valid_angle(999.0, self._def(min_normal=90.0)) is True
+
+    def test_only_max_normal_set(self):
+        """max_normal만 있을 때 하한 제한 없음"""
+        calc = AngleCalculator({})
+        assert calc._is_valid_angle(-100.0, self._def(max_normal=180.0)) is True
+        assert calc._is_valid_angle(181.0, self._def(max_normal=180.0)) is False
