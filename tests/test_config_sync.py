@@ -247,3 +247,34 @@ def test_admin_reload_config_returns_success_with_valid_key():
     assert body["success"] is True
     assert "version" in body
     assert "sports" in body
+
+
+# ──────────────────────────────────────────────────────────
+# 6. diagnosis 라벨 — 번들 config에 실제 라벨 존재 확인 (R-096)
+# ──────────────────────────────────────────────────────────
+
+
+@pytest.mark.parametrize("sub_category", ["DRIVER", "IRON"])
+def test_bundled_config_has_diagnosis_labels(sub_category):
+    """번들 sports_config.json의 DRIVER/IRON 모든 각도에 diagnosis 라벨이 정의돼 있어야 함.
+
+    diagnosis_low / diagnosis_high 중 하나라도 없으면 _determine_diagnosis()가
+    None을 반환해 LLM 피드백에 진단명이 빠지는 문제가 생긴다 (R-096).
+    """
+    _reset_cache()
+
+    with patch("core.sport_configs.get_settings", return_value=_make_settings("local")):
+        from core.sport_configs import load_sports_config
+
+        config = load_sports_config(force_reload=True)
+
+    angles = config["GOLF"]["sub_categories"][sub_category]["angles"]
+    assert angles, f"{sub_category} angles가 비어있음"
+
+    for angle_name, angle_def in angles.items():
+        assert angle_def.get("diagnosis_low"), (
+            f"{sub_category}/{angle_name}: diagnosis_low 미정의"
+        )
+        assert angle_def.get("diagnosis_high"), (
+            f"{sub_category}/{angle_name}: diagnosis_high 미정의"
+        )
