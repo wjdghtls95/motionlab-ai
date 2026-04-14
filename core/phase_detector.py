@@ -40,6 +40,8 @@ class PhaseDetector:
             PhaseDetection.RULE_ANGLE_MAX: self._detect_angle_max,
             PhaseDetection.RULE_ANGLE_MIN: self._detect_angle_min,
             PhaseDetection.RULE_VELOCITY_THRESHOLD: self._detect_velocity_threshold,
+            PhaseDetection.RULE_DIRECTION_CHANGE: self._detect_direction_change,
+            PhaseDetection.RULE_PRE_MOTION: self._detect_pre_motion,
         }
 
     # ──────────────────────────────────────
@@ -97,11 +99,17 @@ class PhaseDetector:
                 )
                 continue
 
-            # search_after 처리: 특정 구간 이후부터만 탐색
-            search_start = self._resolve_search_start(params, detected_keyframes)
+            # search_after / search_start_pct 처리
+            search_start = self._resolve_search_start(
+                params, detected_keyframes, total_frames
+            )
+            # search_end_pct 처리
+            search_end = self._resolve_search_end(params, total_frames)
 
             # 규칙 실행
-            frame = handler(angle_series, params, search_start, total_frames)
+            frame = handler(
+                angle_series, params, search_start, search_end, total_frames
+            )
 
             if frame is not None:
                 keyframes.append({"name": name, "frame": frame})
@@ -122,7 +130,12 @@ class PhaseDetector:
     # ──────────────────────────────────────
 
     def _detect_stabilization(
-        self, series: np.ndarray, params: dict, search_start: int, total_frames: int
+        self,
+        series: np.ndarray,
+        params: dict,
+        search_start: int,
+        search_end: int,
+        total_frames: int,
     ) -> Optional[int]:
         """안정 구간 감지: 이동 윈도우 내 std가 threshold 이하인 구간"""
         window = params.get("window", PhaseDetection.DEFAULT_WINDOW)
@@ -131,17 +144,16 @@ class PhaseDetector:
         )
         position = params.get("position", "start")  # "start" 또는 "end"
 
+        end = min(search_end, len(series))
         if position == "end":
-            # 끝에서부터 역순 탐색
-            for i in range(len(series) - window, search_start, -1):
+            for i in range(end - window, search_start, -1):
                 if i < 0:
                     break
                 segment = series[i : i + window]
                 if np.std(segment) <= std_threshold:
                     return i
         else:
-            # 앞에서부터 순방향 탐색
-            for i in range(search_start, len(series) - window + 1):
+            for i in range(search_start, end - window + 1):
                 segment = series[i : i + window]
                 if np.std(segment) > std_threshold:
                     return max(i - 1, 0)
@@ -149,13 +161,19 @@ class PhaseDetector:
         return None
 
     def _detect_angle_increase(
-        self, series: np.ndarray, params: dict, search_start: int, total_frames: int
+        self,
+        series: np.ndarray,
+        params: dict,
+        search_start: int,
+        search_end: int,
+        total_frames: int,
     ) -> Optional[int]:
         """각도 증가 시작점 감지"""
         window = params.get("window", PhaseDetection.DEFAULT_WINDOW)
         min_change = params.get("min_change", PhaseDetection.DEFAULT_THRESHOLD)
 
-        for i in range(search_start, len(series) - window):
+        end = min(search_end, len(series)) - window
+        for i in range(search_start, end):
             diff = series[i + window] - series[i]
             if diff >= min_change:
                 return i
@@ -163,13 +181,19 @@ class PhaseDetector:
         return None
 
     def _detect_angle_decrease(
-        self, series: np.ndarray, params: dict, search_start: int, total_frames: int
+        self,
+        series: np.ndarray,
+        params: dict,
+        search_start: int,
+        search_end: int,
+        total_frames: int,
     ) -> Optional[int]:
         """각도 감소 시작점 감지"""
         window = params.get("window", PhaseDetection.DEFAULT_WINDOW)
         min_change = params.get("min_change", PhaseDetection.DEFAULT_THRESHOLD)
 
-        for i in range(search_start, len(series) - window):
+        end = min(search_end, len(series)) - window
+        for i in range(search_start, end):
             diff = series[i] - series[i + window]
             if diff >= min_change:
                 return i
@@ -177,33 +201,51 @@ class PhaseDetector:
         return None
 
     def _detect_angle_max(
-        self, series: np.ndarray, params: dict, search_start: int, total_frames: int
+        self,
+        series: np.ndarray,
+        params: dict,
+        search_start: int,
+        search_end: int,
+        total_frames: int,
     ) -> Optional[int]:
-        """search_start 이후 최대 각도 프레임"""
-        if search_start >= len(series):
+        """search_start ~ search_end 구간에서 최대 각도 프레임"""
+        end = min(search_end, len(series))
+        if search_start >= end:
             return None
-        sub = series[search_start:]
+        sub = series[search_start:end]
         return int(search_start + np.argmax(sub))
 
     def _detect_angle_min(
-        self, series: np.ndarray, params: dict, search_start: int, total_frames: int
+        self,
+        series: np.ndarray,
+        params: dict,
+        search_start: int,
+        search_end: int,
+        total_frames: int,
     ) -> Optional[int]:
-        """search_start 이후 최소 각도 프레임"""
-        if search_start >= len(series):
+        """search_start ~ search_end 구간에서 최소 각도 프레임"""
+        end = min(search_end, len(series))
+        if search_start >= end:
             return None
-        sub = series[search_start:]
+        sub = series[search_start:end]
         return int(search_start + np.argmin(sub))
 
     def _detect_velocity_threshold(
-        self, series: np.ndarray, params: dict, search_start: int, total_frames: int
+        self,
+        series: np.ndarray,
+        params: dict,
+        search_start: int,
+        search_end: int,
+        total_frames: int,
     ) -> Optional[int]:
         """각도 변화 속도(velocity)가 threshold를 넘는 시점"""
         threshold = params.get("threshold", PhaseDetection.DEFAULT_THRESHOLD)
         direction = params.get("direction", "any")  # "positive", "negative", "any"
 
         velocity = np.diff(series)
+        end = min(search_end, len(velocity))
 
-        for i in range(search_start, len(velocity)):
+        for i in range(search_start, end):
             v = velocity[i]
             if direction == "positive" and v >= threshold:
                 return i
@@ -211,6 +253,71 @@ class PhaseDetector:
                 return i
             elif direction == "any" and abs(v) >= threshold:
                 return i
+
+        return None
+
+    def _detect_direction_change(
+        self,
+        series: np.ndarray,
+        params: dict,
+        search_start: int,
+        search_end: int,
+        total_frames: int,
+    ) -> Optional[int]:
+        """각도가 감소하다가 증가로 전환하는 첫 번째 지점 (backswing_top용)
+
+        velocity 부호가 음수→양수로 바뀌는 전환점을 찾는다.
+        노이즈 제거를 위해 rolling mean으로 velocity 평활화 후 탐색.
+        """
+        min_decrease_frames = params.get("min_decrease_frames", 3)
+        smooth_window = params.get("smooth_window", 7)
+
+        velocity = np.diff(series)
+
+        # Rolling mean으로 노이즈 제거
+        if len(velocity) >= smooth_window:
+            kernel = np.ones(smooth_window) / smooth_window
+            smoothed = np.convolve(velocity, kernel, mode="same")
+        else:
+            smoothed = velocity
+
+        end = min(search_end, len(smoothed))
+        neg_count = 0
+
+        for i in range(search_start, end):
+            v = smoothed[i]
+            if v < 0:
+                neg_count += 1
+            elif v > 0 and neg_count >= min_decrease_frames:
+                # 충분히 감소한 뒤 처음 증가로 전환된 지점
+                return i
+            elif v > 0:
+                # 감소가 충분하지 않은 상태에서 양수 → 리셋
+                neg_count = 0
+
+        return None
+
+    def _detect_pre_motion(
+        self,
+        series: np.ndarray,
+        params: dict,
+        search_start: int,
+        search_end: int,
+        total_frames: int,
+    ) -> Optional[int]:
+        """큰 움직임이 시작되기 직전 프레임 (address용)
+
+        |velocity|가 motion_threshold를 처음 초과하는 프레임 - 1을 반환.
+        스윙이 시작되기 직전의 마지막 정지 프레임을 찾는다.
+        """
+        motion_threshold = params.get("motion_threshold", 3.0)
+
+        velocity_abs = np.abs(np.diff(series))
+        end = min(search_end, len(velocity_abs))
+
+        for i in range(search_start, end):
+            if velocity_abs[i] >= motion_threshold:
+                return max(i - 1, 0)
 
         return None
 
@@ -244,13 +351,28 @@ class PhaseDetector:
         return series
 
     def _resolve_search_start(
-        self, params: dict, detected_keyframes: Dict[str, int]
+        self, params: dict, detected_keyframes: Dict[str, int], total_frames: int
     ) -> int:
-        """search_after 파라미터가 있으면 해당 구간의 프레임 이후부터 탐색"""
+        """search_after / search_start_pct 기반 탐색 하한 계산"""
         search_after = params.get("search_after")
-        if search_after and search_after in detected_keyframes:
-            return detected_keyframes[search_after] + 1
-        return 0
+        base = (
+            detected_keyframes[search_after] + 1
+            if (search_after and search_after in detected_keyframes)
+            else 0
+        )
+
+        search_start_pct = params.get("search_start_pct")
+        if search_start_pct is not None:
+            pct_frame = int(total_frames * search_start_pct)
+            return max(base, pct_frame)
+        return base
+
+    def _resolve_search_end(self, params: dict, total_frames: int) -> int:
+        """search_end_pct 기반 탐색 상한 계산"""
+        search_end_pct = params.get("search_end_pct")
+        if search_end_pct is not None:
+            return int(total_frames * search_end_pct)
+        return total_frames
 
     def _get_total_frames(self, angles_data: Dict[str, Any]) -> int:
         """angles_data에서 전체 프레임 수 추출"""

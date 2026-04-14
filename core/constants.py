@@ -63,6 +63,8 @@ class PhaseDetection:
     RULE_ANGLE_MAX = "angle_max"
     RULE_ANGLE_MIN = "angle_min"
     RULE_VELOCITY_THRESHOLD = "velocity_threshold"
+    RULE_DIRECTION_CHANGE = "direction_change"
+    RULE_PRE_MOTION = "pre_motion"
 
     # 기본 파라미터
     DEFAULT_WINDOW = 5
