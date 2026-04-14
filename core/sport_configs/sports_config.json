@@ -1,11 +1,11 @@
 {
   "meta": {
-    "config_version": "2.0.10",
-    "generated_at": "2026-04-07T07:53:11.557309",
-    "source_csv_hash": "sha256:99234cce1c75",
+    "config_version": "2.0.13",
+    "generated_at": "2026-04-15T00:57:00.156976",
+    "source_csv_hash": "sha256:bb14e5ab9526",
     "source_folder": "v2.0",
     "generator": "csv_to_config.py",
-    "changelog": "R-086: phases 정의 추가 (address/backswing_top/impact)"
+    "changelog": ""
   },
   "sports": {
     "GOLF": {
@@ -64,7 +64,10 @@
                   ],
                   "weight": 0.17
                 }
-              }
+              },
+              "phase": "backswing_top",
+              "diagnosis_low": "리드팔 과도 접힘",
+              "diagnosis_high": "리드팔 과신전 (오버스윙)"
             },
             "right_arm_angle": {
               "points": [
@@ -118,7 +121,10 @@
                   ],
                   "weight": 0.17
                 }
-              }
+              },
+              "phase": "backswing_top",
+              "diagnosis_low": "트레일팔 과도 접힘",
+              "diagnosis_high": "트레일팔 불충분 접힘"
             },
             "spine_angle": {
               "points": [
@@ -172,7 +178,10 @@
                   ],
                   "weight": 0.17
                 }
-              }
+              },
+              "phase": "address",
+              "diagnosis_low": "척추 과도 전경",
+              "diagnosis_high": "척추 과신전"
             },
             "hip_shoulder_separation": {
               "points": null,
@@ -222,7 +231,10 @@
                   ],
                   "weight": 0.16
                 }
-              }
+              },
+              "phase": "backswing_top",
+              "diagnosis_low": "X-Factor 부족",
+              "diagnosis_high": "X-Factor 과다"
             },
             "left_knee_angle": {
               "points": [
@@ -276,7 +288,10 @@
                   ],
                   "weight": 0.17
                 }
-              }
+              },
+              "phase": "address",
+              "diagnosis_low": "리드 무릎 과다 굽힘",
+              "diagnosis_high": "리드 무릎 과신전"
             },
             "right_knee_angle": {
               "points": [
@@ -330,26 +345,31 @@
                   ],
                   "weight": 0.16
                 }
-              }
+              },
+              "phase": "address",
+              "diagnosis_low": "트레일 무릎 과다 굽힘",
+              "diagnosis_high": "트레일 무릎 불충분 굽힘"
             }
           },
           "phases": [
             {
               "name": "address",
               "target_angle": "left_arm_angle",
-              "detection_rule": "stabilization",
+              "detection_rule": "pre_motion",
               "params": {
-                "window": 5,
-                "std_threshold": 2.0,
-                "position": "start"
+                "motion_threshold": 3.0,
+                "search_end_pct": 0.35
               }
             },
             {
               "name": "backswing_top",
               "target_angle": "left_arm_angle",
-              "detection_rule": "angle_min",
+              "detection_rule": "direction_change",
               "params": {
-                "search_after": "address"
+                "search_start_pct": 0.15,
+                "search_end_pct": 0.65,
+                "min_decrease_frames": 3,
+                "smooth_window": 7
               }
             },
             {
@@ -357,7 +377,8 @@
               "target_angle": "left_arm_angle",
               "detection_rule": "angle_max",
               "params": {
-                "search_after": "backswing_top"
+                "search_after": "backswing_top",
+                "search_end_pct": 0.85
               }
             }
           ]
@@ -416,7 +437,10 @@
                   ],
                   "weight": 0.1667
                 }
-              }
+              },
+              "phase": "backswing_top",
+              "diagnosis_low": "리드팔 과도 접힘",
+              "diagnosis_high": "리드팔 과신전 (오버스윙)"
             },
             "right_arm_angle": {
               "points": [
@@ -470,7 +494,10 @@
                   ],
                   "weight": 0.1667
                 }
-              }
+              },
+              "phase": "backswing_top",
+              "diagnosis_low": "트레일팔 과도 접힘",
+              "diagnosis_high": "트레일팔 불충분 접힘"
             },
             "spine_angle": {
               "points": [
@@ -524,7 +551,10 @@
                   ],
                   "weight": 0.1667
                 }
-              }
+              },
+              "phase": "address",
+              "diagnosis_low": "척추 과도 전경",
+              "diagnosis_high": "척추 과신전"
             },
             "hip_shoulder_separation": {
               "points": null,
@@ -574,7 +604,10 @@
                   ],
                   "weight": 0.1667
                 }
-              }
+              },
+              "phase": "backswing_top",
+              "diagnosis_low": "X-Factor 부족",
+              "diagnosis_high": "X-Factor 과다"
             },
             "left_knee_angle": {
               "points": [
@@ -628,7 +661,10 @@
                   ],
                   "weight": 0.1667
                 }
-              }
+              },
+              "phase": "address",
+              "diagnosis_low": "리드 무릎 과다 굽힘",
+              "diagnosis_high": "리드 무릎 과신전"
             },
             "right_knee_angle": {
               "points": [
@@ -682,26 +718,31 @@
                   ],
                   "weight": 0.1667
                 }
-              }
+              },
+              "phase": "address",
+              "diagnosis_low": "트레일 무릎 과다 굽힘",
+              "diagnosis_high": "트레일 무릎 불충분 굽힘"
             }
           },
           "phases": [
             {
               "name": "address",
               "target_angle": "left_arm_angle",
-              "detection_rule": "stabilization",
+              "detection_rule": "pre_motion",
               "params": {
-                "window": 5,
-                "std_threshold": 2.0,
-                "position": "start"
+                "motion_threshold": 3.0,
+                "search_end_pct": 0.35
               }
             },
             {
               "name": "backswing_top",
               "target_angle": "left_arm_angle",
-              "detection_rule": "angle_min",
+              "detection_rule": "direction_change",
               "params": {
-                "search_after": "address"
+                "search_start_pct": 0.15,
+                "search_end_pct": 0.65,
+                "min_decrease_frames": 3,
+                "smooth_window": 7
               }
             },
             {
@@ -709,7 +750,8 @@
               "target_angle": "left_arm_angle",
               "detection_rule": "angle_max",
               "params": {
-                "search_after": "backswing_top"
+                "search_after": "backswing_top",
+                "search_end_pct": 0.85
               }
             }
           ]
