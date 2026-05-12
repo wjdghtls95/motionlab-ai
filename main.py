@@ -21,6 +21,7 @@ if settings.SENTRY_DSN:
     sentry_sdk.init(
         dsn=settings.SENTRY_DSN,
         environment=settings.APP_ENV,
+        server_name="motionlab-ai",
     )
     logger.info("✅ Sentry 초기화 완료")
 
